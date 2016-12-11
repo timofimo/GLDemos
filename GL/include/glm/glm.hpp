@@ -48,7 +48,7 @@
 /// These templetes are implementation details of GLM types and should not be used explicitly.
 ///
 /// @ingroup core
-
+#pragma warning(push, 0)
 #include "detail/_fixes.hpp"
 
 #pragma once
@@ -86,3 +86,4 @@
 #include "matrix.hpp"
 #include "vector_relational.hpp"
 #include "integer.hpp"
+#pragma warning(pop)

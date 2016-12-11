@@ -1,22 +1,23 @@
 #include "..\include\Window.h"
-#include "GLFW/glfw3.h"
 #include <stdexcept>
+#include "Utilities.h"
+#include <glad/glad.h>
 
-GL::GLFWWindow::GLFWWindow(): m_window(nullptr), m_width(0), m_height(0)
+GLR::GLFWWindow::GLFWWindow(): m_window(nullptr), m_width(0), m_height(0)
 {
 }
 
-GL::GLFWWindow::GLFWWindow(unsigned width, unsigned height, const char* title, bool borderless)
+GLR::GLFWWindow::GLFWWindow(unsigned width, unsigned height, const char* title, bool borderless)
 {
 	Initialize(width, height, title, borderless);
 }
 
-GL::GLFWWindow::~GLFWWindow()
+GLR::GLFWWindow::~GLFWWindow()
 {
 	Destroy();
 }
 
-void GL::GLFWWindow::Initialize(unsigned width, unsigned height, const char* title, bool borderless)
+void GLR::GLFWWindow::Initialize(unsigned width, unsigned height, const char* title, bool borderless)
 {
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW.");
@@ -31,14 +32,14 @@ void GL::GLFWWindow::Initialize(unsigned width, unsigned height, const char* tit
 	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 	glfwWindowHint(GLFW_DECORATED, !borderless); 
 
-	if(width == mode->width && height == mode->height)
+	if(width == unsigned(mode->width) && height == unsigned(mode->height))
 		m_window = glfwCreateWindow(width, height, title, monitor, nullptr);	// Fullscreen
 	else
 	{
 		m_window = glfwCreateWindow(width, height, title, nullptr, nullptr);	// Windowed
 
 		// Center the window
-		glfwSetWindowPos(m_window, (mode->width - width) * 0.5f, (mode->height - height) * 0.5f);
+		glfwSetWindowPos(m_window, int((mode->width - width) * 0.5f), int((mode->height - height) * 0.5f));
 	}
 
 	if (!m_window)
@@ -49,25 +50,28 @@ void GL::GLFWWindow::Initialize(unsigned width, unsigned height, const char* tit
 
 	m_width = width;
 	m_height = height;
+
+	if (!gladLoadGLLoader(GLADloadproc(glfwGetProcAddress)))
+		LOG_E("Failed to initialize OpenGL context");
 }
 
-void GL::GLFWWindow::Destroy()
+void GLR::GLFWWindow::Destroy()
 {
 	glfwTerminate();
 }
 
-void GL::GLFWWindow::GetWindowRes(unsigned& outWidth, unsigned& outHeight)
+void GLR::GLFWWindow::GetWindowRes(unsigned& outWidth, unsigned& outHeight)
 {
 	outWidth = m_width;
 	outHeight = m_height;
 }
 
-bool GL::GLFWWindow::ShouldClose()
+bool GLR::GLFWWindow::ShouldClose()
 {
 	return glfwWindowShouldClose(m_window) > 0;
 }
 
-void GL::GLFWWindow::SwapBuffers()
+void GLR::GLFWWindow::SwapBuffers()
 {
 	glfwSwapBuffers(m_window);
 	glfwPollEvents();
