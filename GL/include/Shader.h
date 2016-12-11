@@ -2,6 +2,7 @@
 #include "GL.h"
 #include <vector>
 #include <map>
+#include <glm/glm.hpp>
 
 namespace GLR
 {
@@ -15,6 +16,23 @@ namespace GLR
 		Shader(const char* vertexShader, const char* geometryShader, const char* fragmentShader);
 		Shader(const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType);
 		~Shader();
+
+		void SetUniform(const std::string& name, const float& f);
+		void SetUniform(const std::string& name, const glm::vec2& v);
+		void SetUniform(const std::string& name, const glm::vec3& v);
+		void SetUniform(const std::string& name, const glm::vec4& v);
+		void SetUniform(const std::string& name, const int& i);
+		void SetUniform(const std::string& name, const glm::ivec2& v);
+		void SetUniform(const std::string& name, const glm::ivec3& v);
+		void SetUniform(const std::string& name, const glm::ivec4& v);
+		void SetUniform(const std::string& name, const unsigned& u);
+		void SetUniform(const std::string& name, const glm::uvec2& v);
+		void SetUniform(const std::string& name, const glm::uvec3& v);
+		void SetUniform(const std::string& name, const glm::uvec4& v);
+		void SetUniform(const std::string& name, const double& d);
+		void SetUniform(const std::string& name, const glm::dvec2& v);
+		void SetUniform(const std::string& name, const glm::dvec3& v);
+		void SetUniform(const std::string& name, const glm::dvec4& v);
 
 		GLuint GetProgram() const;
 
