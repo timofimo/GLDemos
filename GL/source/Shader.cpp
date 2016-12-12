@@ -1,7 +1,9 @@
 #include "..\include\Shader.h"
 #include <assert.h>
 #include "Utilities.h"
+#include <algorithm>
 
+std::vector<std::string> GLR::Shader::m_globalUniformBlocks;
 
 GLR::Shader::Shader(const char* computeShader) : Shader({computeShader}, {GL_COMPUTE_SHADER})
 {
@@ -100,6 +102,27 @@ GLR::Shader::~Shader()
 	}
 }
 
+void GLR::Shader::AddGlobalUniformBlock(const std::string& uniformBlockName)
+{
+	m_globalUniformBlocks.push_back(uniformBlockName);
+	std::sort(m_globalUniformBlocks.begin(), m_globalUniformBlocks.end());
+}
+
+void GLR::Shader::CheckCompatibilityMesh(const Mesh* mesh)
+{
+	std::vector<GLenum> meshAttributes = mesh->GetAttributes();
+	if (m_attributes.size() != meshAttributes.size())
+		LOG_E("Mesh and shader attributes do not have the same count");
+
+	unsigned i = 0;
+	for(auto it = m_attributes.begin(); it != m_attributes.end(); ++it)
+	{
+		if (it->second.type != meshAttributes[i])
+			LOG_E("Mesh and shader attributes do not align");
+		++i;
+	}
+}
+
 void GLR::Shader::SetUniform(const std::string& name, const float& f)
 {
 	auto it = m_uniforms.find(name);
@@ -107,6 +130,7 @@ void GLR::Shader::SetUniform(const std::string& name, const float& f)
 	{
 		assert(it->second.type == GL_FLOAT && "The uniform type doesn't match the input type");
 		glUniform1f(it->second.location, f);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -119,6 +143,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::vec2& v)
 	{
 		assert(it->second.type == GL_FLOAT_VEC2 && "The uniform type doesn't match the input type");
 		glUniform2fv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -131,6 +156,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::vec3& v)
 	{
 		assert(it->second.type == GL_FLOAT_VEC3 && "The uniform type doesn't match the input type");
 		glUniform3fv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -143,6 +169,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::vec4& v)
 	{
 		assert(it->second.type == GL_FLOAT_VEC4 && "The uniform type doesn't match the input type");
 		glUniform4fv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -155,6 +182,7 @@ void GLR::Shader::SetUniform(const std::string& name, const int& i)
 	{
 		assert(it->second.type == GL_INT && "The uniform type doesn't match the input type");
 		glUniform1i(it->second.location, i);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -167,6 +195,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::ivec2& v)
 	{
 		assert(it->second.type == GL_INT_VEC2 && "The uniform type doesn't match the input type");
 		glUniform2iv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -179,6 +208,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::ivec3& v)
 	{
 		assert(it->second.type == GL_INT_VEC3 && "The uniform type doesn't match the input type");
 		glUniform3iv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -191,6 +221,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::ivec4& v)
 	{
 		assert(it->second.type == GL_INT_VEC4 && "The uniform type doesn't match the input type");
 		glUniform4iv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -203,6 +234,7 @@ void GLR::Shader::SetUniform(const std::string& name, const unsigned& u)
 	{
 		assert(it->second.type == GL_UNSIGNED_INT && "The uniform type doesn't match the input type");
 		glUniform1ui(it->second.location, u);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -215,6 +247,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::uvec2& v)
 	{
 		assert(it->second.type == GL_UNSIGNED_INT_VEC2 && "The uniform type doesn't match the input type");
 		glUniform2uiv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -227,6 +260,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::uvec3& v)
 	{
 		assert(it->second.type == GL_UNSIGNED_INT_VEC3 && "The uniform type doesn't match the input type");
 		glUniform3uiv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -239,6 +273,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::uvec4& v)
 	{
 		assert(it->second.type == GL_UNSIGNED_INT_VEC4 && "The uniform type doesn't match the input type");
 		glUniform4uiv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -251,6 +286,7 @@ void GLR::Shader::SetUniform(const std::string& name, const double& d)
 	{
 		assert(it->second.type == GL_DOUBLE && "The uniform type doesn't match the input type");
 		glUniform1d(it->second.location, d);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -263,6 +299,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::dvec2& v)
 	{
 		assert(it->second.type == GL_DOUBLE_VEC2 && "The uniform type doesn't match the input type");
 		glUniform2dv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -275,6 +312,7 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::dvec3& v)
 	{
 		assert(it->second.type == GL_DOUBLE_VEC3 && "The uniform type doesn't match the input type");
 		glUniform3dv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
@@ -287,10 +325,26 @@ void GLR::Shader::SetUniform(const std::string& name, const glm::dvec4& v)
 	{
 		assert(it->second.type == GL_DOUBLE_VEC4 && "The uniform type doesn't match the input type");
 		glUniform4dv(it->second.location, 1, &v[0]);
+		GL_GET_ERROR();
 	}
 	else
 		LOG_E("Uniform not found");
 }
+
+/*void GLR::Shader::SetUniform(const std::string& name, const Texture& t)
+{
+	auto it = m_uniforms.find(name);
+	if (it != m_uniforms.end())
+	{
+		assert(it->second.type == GL_SAMPLER_2D && "The uniform type doesn't match the input type");
+		glActiveTexture(GL_TEXTURE0 + it->second.sampler);
+		glBindTexture(GL_TEXTURE_2D, texture.GetTexture());
+		glUniform1i(it->second.location, it->second.sampler);
+		GL_GET_ERROR();
+	}
+	else
+		LOG_E("Uniform not found");
+}*/
 
 GLuint GLR::Shader::GetProgram() const
 {
@@ -325,6 +379,8 @@ void GLR::Shader::CompileShader(GLuint& shaderID, GLenum shaderType, const char*
 		glDeleteShader(shaderID);
 		LOG_E("Failed to compile shader");
 	}
+
+	GL_GET_ERROR();
 }
 
 void GLR::Shader::LinkProgram(GLuint programID)
@@ -349,6 +405,8 @@ void GLR::Shader::LinkProgram(GLuint programID)
 	glGetProgramiv(programID, GL_LINK_STATUS, &status);
 	if (status == GL_FALSE)
 		LOG_E("Failed to link shader");
+
+	GL_GET_ERROR();
 }
 
 void GLR::Shader::ValidateProgram(GLuint programID)
@@ -369,6 +427,8 @@ void GLR::Shader::ValidateProgram(GLuint programID)
 	glGetProgramiv(programID, GL_VALIDATE_STATUS, &status);
 	if (status == GL_FALSE)
 		LOG_E("Shader program not valid");
+
+	GL_GET_ERROR();
 }
 
 void GLR::Shader::LoadUniforms()
@@ -402,6 +462,8 @@ void GLR::Shader::LoadUniforms()
 		else
 			m_uniforms[name] = InputParameter(name, location, type);
 	}
+
+	GL_GET_ERROR();
 }
 
 void GLR::Shader::LoadAttributes()
@@ -431,6 +493,8 @@ void GLR::Shader::LoadAttributes()
 		// Create and store the attribute by name
 		m_attributes[name] = InputParameter(name, location, type);
 	}
+
+	GL_GET_ERROR();
 }
 
 void GLR::Shader::LoadUniformBlocks()
@@ -457,23 +521,41 @@ void GLR::Shader::LoadUniformBlocks()
 		glGetActiveUniformBlockName(m_programID, i, nameLength, nullptr, &blockName[0]);
 		std::string name(&blockName[0]);
 
-		// Get the size of the uniform block
-		GLint bufferSize;
-		glGetActiveUniformBlockiv(m_programID, i, GL_UNIFORM_BLOCK_DATA_SIZE, &bufferSize);
+		// Look for the uniform block in the global list
+		bool isGlobal = std::binary_search(m_globalUniformBlocks.begin(), m_globalUniformBlocks.end(), name);
 
-		// Create the buffer
-		GLuint buffer;
-		glGenBuffers(1, &buffer);
-		glBindBuffer(GL_UNIFORM_BUFFER, buffer);
-		glBufferData(GL_UNIFORM_BUFFER, bufferSize, NULL, GL_STREAM_DRAW);
+		// Look for the global uniform block in the list of uniform blocks
+		std::map<std::string, UniformBlock>::iterator it = m_uniformBlocks.end();
+		if(isGlobal)
+			it = m_uniformBlocks.find(name);
 
-		// Bind this programs uniform block to this buffer
-		glBindBufferBase(GL_UNIFORM_BUFFER, bindingCount, buffer);
+		if(it != m_uniformBlocks.end())
+		{
+			// If the global block already exists, bind it to the buffer
+			glUniformBlockBinding(m_programID, i, it->second.binding);
+		}
+		else
+		{
+			// Get the size of the uniform block
+			GLint bufferSize;
+			glGetActiveUniformBlockiv(m_programID, i, GL_UNIFORM_BLOCK_DATA_SIZE, &bufferSize);
 
-		// Unbind the buffer
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+			// Create the buffer
+			GLuint buffer;
+			glGenBuffers(1, &buffer);
+			glBindBuffer(GL_UNIFORM_BUFFER, buffer);
+			glBufferData(GL_UNIFORM_BUFFER, bufferSize, NULL, GL_STREAM_DRAW);
 
-		// Create and store the shader block by name
-		m_uniformBlocks[name] = UniformBlock(name, buffer, bindingCount++, bufferSize);
+			// Bind this programs uniform block to this buffer
+			glBindBufferBase(GL_UNIFORM_BUFFER, bindingCount, buffer);
+
+			// Unbind the buffer
+			glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+			// Create and store the shader block by name
+			m_uniformBlocks[name] = UniformBlock(name, buffer, bindingCount++, bufferSize);
+		}
 	}
+
+	GL_GET_ERROR();
 }

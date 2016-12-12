@@ -49,6 +49,6 @@ void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes
 		if (mesh->HasTangentsAndBitangents())
 			attributeTypes.push_back(GL_FLOAT_VEC3);
 
-		meshes.push_back(Mesh(interleavedData.data(), mesh->mNumVertices, indexData.data(), mesh->mNumFaces * 3, attributeTypes));
+		meshes.push_back(Mesh(mesh->mName.C_Str(), interleavedData.data(), mesh->mNumVertices * size, indexData.data(), mesh->mNumFaces * 3, attributeTypes));
 	}
 }

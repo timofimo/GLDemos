@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <glm/glm.hpp>
+#include "Mesh.h"
 
 namespace GLR
 {
@@ -16,6 +17,9 @@ namespace GLR
 		Shader(const char* vertexShader, const char* geometryShader, const char* fragmentShader);
 		Shader(const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType);
 		~Shader();
+
+		static void AddGlobalUniformBlock(const std::string& uniformBlockName);
+		void CheckCompatibilityMesh(const Mesh* mesh);
 
 		void SetUniform(const std::string& name, const float& f);
 		void SetUniform(const std::string& name, const glm::vec2& v);
@@ -33,6 +37,7 @@ namespace GLR
 		void SetUniform(const std::string& name, const glm::dvec2& v);
 		void SetUniform(const std::string& name, const glm::dvec3& v);
 		void SetUniform(const std::string& name, const glm::dvec4& v);
+		//void SetUniform(const std::string& name, const Texture& t);
 
 		GLuint GetProgram() const;
 
@@ -48,6 +53,7 @@ namespace GLR
 		std::map<std::string, InputParameter> m_uniforms;
 		std::map<std::string, InputParameter> m_attributes;
 		std::map<std::string, UniformBlock> m_uniformBlocks;
+		static std::vector<std::string> m_globalUniformBlocks;
 
 		struct InputParameter
 		{

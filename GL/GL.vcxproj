@@ -22,6 +22,8 @@
     <ClInclude Include="include\GLRenderer.h" />
     <ClInclude Include="include\GL.h" />
     <ClInclude Include="include\Mesh.h" />
+    <ClInclude Include="include\MeshBuffer.h" />
+    <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\ResourceLoader.h" />
     <ClInclude Include="include\Shader.h" />
     <ClInclude Include="include\Utilities.h" />
@@ -31,6 +33,8 @@
     <ClCompile Include="include\glad.c" />
     <ClCompile Include="source\GLRenderer.cpp" />
     <ClCompile Include="source\Mesh.cpp" />
+    <ClCompile Include="source\MeshBuffer.cpp" />
+    <ClCompile Include="source\Model.cpp" />
     <ClCompile Include="source\ResourceLoader.cpp" />
     <ClCompile Include="source\Shader.cpp" />
     <ClCompile Include="source\Window.cpp" />
