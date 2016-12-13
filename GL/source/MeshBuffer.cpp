@@ -2,57 +2,13 @@
 #include "Utilities.h"
 
 
-GLR::MeshBuffer::MeshBuffer(const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes)
+GLR::MeshBuffer::MeshBuffer(const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes) : m_attributes(attributeTypes)
 {
-	glGenVertexArrays(1, &m_vao);
-	GL_GET_ERROR();
+	m_vertexData.resize(vertexDataCount);
+	memcpy(m_vertexData.data(), vertexData, vertexDataCount * sizeof(float));
 
-	glBindVertexArray(m_vao);
-
-	glGenBuffers(1, &m_vbo);
-	GL_GET_ERROR();
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-	GL_GET_ERROR();
-
-	glBufferData(GL_ARRAY_BUFFER, vertexDataCount * sizeof(float), vertexData, GL_STATIC_DRAW);
-	GL_GET_ERROR();
-
-	struct AttributeInformation
-	{
-		unsigned size;
-		unsigned type;
-		UINT64 offset;
-	};
-	std::vector<AttributeInformation> attributeInformation(attributeTypes.size());
-	unsigned stride = 0;
-	for (unsigned i = 0; i < unsigned(attributeTypes.size()); i++)
-	{
-		GetAttributeTypeInformation(attributeTypes[i], attributeInformation[i].size, attributeInformation[i].type);
-		attributeInformation[i].offset = stride;
-		stride += attributeInformation[i].size * 4;
-	}
-
-	for (unsigned i = 0; i < unsigned(attributeTypes.size()); i++)
-	{
-		glVertexAttribPointer(i, attributeInformation[i].size, attributeInformation[i].type, GL_FALSE, stride, reinterpret_cast<void*>(attributeInformation[i].offset));
-		glEnableVertexAttribArray(i);
-		GL_GET_ERROR();
-	}
-
-	m_attributes = attributeTypes;
-
-	glGenBuffers(1, &m_ibo);
-	GL_GET_ERROR();
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
-	GL_GET_ERROR();
-
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexDataCount * sizeof(unsigned), indexData, GL_STATIC_DRAW);
-	GL_GET_ERROR();
-
-	glBindVertexArray(0);
-	GL_GET_ERROR();
+	m_indexData.resize(indexDataCount);
+	memcpy(m_indexData.data(), indexData, indexDataCount * sizeof(unsigned));
 }
 
 GLR::MeshBuffer::~MeshBuffer()
@@ -76,6 +32,80 @@ GLR::MeshBuffer::~MeshBuffer()
 	}
 }
 
+void GLR::MeshBuffer::Finish()
+{
+	if (m_vertexData.empty() || m_indexData.empty() || m_attributes.empty())
+		LOG_E("Mesh buffer doesn't have all the necessary data");
+
+	if (m_vao != 0)	// Has already been initialised
+		return;
+
+	glGenVertexArrays(1, &m_vao);
+	GL_GET_ERROR();
+
+	glBindVertexArray(m_vao);
+
+	glGenBuffers(1, &m_vbo);
+	GL_GET_ERROR();
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+	GL_GET_ERROR();
+
+	glBufferData(GL_ARRAY_BUFFER, m_vertexData.size() * sizeof(float), m_vertexData.data(), GL_STATIC_DRAW);
+	GL_GET_ERROR();
+
+	struct AttributeInformation
+	{
+		unsigned size;
+		unsigned type;
+		UINT64 offset;
+	};
+	std::vector<AttributeInformation> attributeInformation(m_attributes.size());
+	unsigned stride = 0;
+	for (unsigned i = 0; i < unsigned(m_attributes.size()); i++)
+	{
+		GetAttributeTypeInformation(m_attributes[i], attributeInformation[i].size, attributeInformation[i].type);
+		attributeInformation[i].offset = stride;
+		stride += attributeInformation[i].size * 4;
+	}
+
+	for (unsigned i = 0; i < unsigned(m_attributes.size()); i++)
+	{
+		glVertexAttribPointer(i, attributeInformation[i].size, attributeInformation[i].type, GL_FALSE, stride, reinterpret_cast<void*>(attributeInformation[i].offset));
+		glEnableVertexAttribArray(i);
+		GL_GET_ERROR();
+	}
+
+	glGenBuffers(1, &m_ibo);
+	GL_GET_ERROR();
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ibo);
+	GL_GET_ERROR();
+
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indexData.size() * sizeof(unsigned), m_indexData.data(), GL_STATIC_DRAW);
+	GL_GET_ERROR();
+
+	glBindVertexArray(0);
+	GL_GET_ERROR();
+}
+
+void GLR::MeshBuffer::AddVertices(const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes)
+{
+	if (m_vao != 0)
+		LOG_E("Trying to add vertex data to finished mesh buffer");
+
+	if (attributeTypes != m_attributes)
+		LOG_E("Trying to add vertices of a different attribute configuration to a mesh buffer");
+
+	size_t oldSize = m_vertexData.size();
+	m_vertexData.resize(m_vertexData.size() + vertexDataCount);
+	memcpy(&m_vertexData[oldSize], vertexData, vertexDataCount * sizeof(float));
+
+	oldSize = m_indexData.size();
+	m_indexData.resize(m_indexData.size() + indexDataCount);
+	memcpy(&m_indexData[oldSize], indexData, indexDataCount * sizeof(unsigned));
+}
+
 GLuint GLR::MeshBuffer::GetVertexArray() const
 {
 	return m_vao;
@@ -84,6 +114,11 @@ GLuint GLR::MeshBuffer::GetVertexArray() const
 const std::vector<GLenum>& GLR::MeshBuffer::GetAttributes() const
 {
 	return m_attributes;
+}
+
+unsigned GLR::MeshBuffer::GetNumberOfIndices() const
+{
+	return unsigned(m_indexData.size());
 }
 
 void GLR::MeshBuffer::GetAttributeTypeInformation(GLenum type, unsigned& size, unsigned& baseType) const

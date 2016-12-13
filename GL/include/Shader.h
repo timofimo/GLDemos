@@ -4,42 +4,157 @@
 #include <map>
 #include <glm/glm.hpp>
 #include "Mesh.h"
+#include "Utilities.h"
 
 namespace GLR
 {
-	class Shader
+	struct InputParameter
 	{
-		struct InputParameter;
-		struct UniformBlock;
+		InputParameter() : name(""), location(-1), type(0), sampler(-1)
+		{}
+		InputParameter(const std::string& name, GLint location, GLenum type, GLint sampler = -1) : name(name), location(location), type(type), sampler(sampler)
+		{}
+
+		void Set(const float& f) const
+		{
+			assert(type == GL_FLOAT && "The uniform type doesn't match the input type");
+			glUniform1f(location, f);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::vec2& v) const
+		{
+			assert(type == GL_FLOAT_VEC2 && "The uniform type doesn't match the input type");
+			glUniform2fv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::vec3& v) const
+		{
+			assert(type == GL_FLOAT_VEC3 && "The uniform type doesn't match the input type");
+			glUniform3fv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::vec4& v) const
+		{
+			assert(type == GL_FLOAT_VEC4 && "The uniform type doesn't match the input type");
+			glUniform4fv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const int& i) const
+		{
+			assert(type == GL_INT && "The uniform type doesn't match the input type");
+			glUniform1i(location, i);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::ivec2& v) const
+		{
+			assert(type == GL_INT_VEC2 && "The uniform type doesn't match the input type");
+			glUniform2iv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::ivec3& v) const
+		{
+			assert(type == GL_INT_VEC3 && "The uniform type doesn't match the input type");
+			glUniform3iv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::ivec4& v) const
+		{
+			assert(type == GL_INT_VEC4 && "The uniform type doesn't match the input type");
+			glUniform4iv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const unsigned& u) const
+		{
+			assert(type == GL_UNSIGNED_INT && "The uniform type doesn't match the input type");
+			glUniform1ui(location, u);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::uvec2& v) const
+		{
+			assert(type == GL_UNSIGNED_INT_VEC2 && "The uniform type doesn't match the input type");
+			glUniform2uiv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::uvec3& v) const
+		{
+			assert(type == GL_UNSIGNED_INT_VEC3 && "The uniform type doesn't match the input type");
+			glUniform3uiv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::uvec4& v) const
+		{
+			assert(type == GL_UNSIGNED_INT_VEC4 && "The uniform type doesn't match the input type");
+			glUniform4uiv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const double& d) const
+		{
+			assert(type == GL_DOUBLE && "The uniform type doesn't match the input type");
+			glUniform1d(location, d);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::dvec2& v) const
+		{
+			assert(type == GL_DOUBLE_VEC2 && "The uniform type doesn't match the input type");
+			glUniform2dv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::dvec3& v) const
+		{
+			assert(type == GL_DOUBLE_VEC3 && "The uniform type doesn't match the input type");
+			glUniform3dv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		void Set(const glm::dvec4& v) const
+		{
+			assert(type == GL_DOUBLE_VEC4 && "The uniform type doesn't match the input type");
+			glUniform4dv(location, 1, &v[0]);
+			GL_GET_ERROR();
+		}
+		/*void SetUniform(const Texture& t) const
+		{
+			assert(type == GL_SAMPLER_2D && "The uniform type doesn't match the input type");
+			glActiveTexture(GL_TEXTURE0 + sampler);
+			GL_GET_ERROR();
+			glBindTexture(GL_TEXTURE_2D, t.GetTexture());
+			GL_GET_ERROR();
+			glUniform1i(location, sampler);
+			GL_GET_ERROR();
+		}*/
+
+		std::string name;
+		GLint location;
+		GLenum type;
+		GLint sampler;
+	};
+
+	struct UniformBlock
+	{
+		UniformBlock() : name(""), bufferID(-1), binding(-1), size(0)
+		{}
+		UniformBlock(const std::string& name, GLint buffer, GLint binding, GLuint size) : name(name), bufferID(buffer), binding(binding), size(size)
+		{}
+
+		std::string name;
+		GLint bufferID;
+		GLint binding;
+		GLuint size;
+	};
+
+	class Shader : public ManagedItem<Shader>
+	{
 	public:
-		Shader(const char* computeShader);
-		Shader(const char* vertexShader, const char* fragmentShader);
-		Shader(const char* vertexShader, const char* geometryShader, const char* fragmentShader);
-		Shader(const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType);
+		Shader(const std::string& name, const char* computeShader);
+		Shader(const std::string& name, const char* vertexShader, const char* fragmentShader);
+		Shader(const std::string& name, const char* vertexShader, const char* geometryShader, const char* fragmentShader);
+		Shader(const std::string& name, const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType);
 		~Shader();
 
 		static void AddGlobalUniformBlock(const std::string& uniformBlockName);
 		void CheckCompatibilityMesh(const Mesh* mesh);
 
-		void SetUniform(const std::string& name, const float& f);
-		void SetUniform(const std::string& name, const glm::vec2& v);
-		void SetUniform(const std::string& name, const glm::vec3& v);
-		void SetUniform(const std::string& name, const glm::vec4& v);
-		void SetUniform(const std::string& name, const int& i);
-		void SetUniform(const std::string& name, const glm::ivec2& v);
-		void SetUniform(const std::string& name, const glm::ivec3& v);
-		void SetUniform(const std::string& name, const glm::ivec4& v);
-		void SetUniform(const std::string& name, const unsigned& u);
-		void SetUniform(const std::string& name, const glm::uvec2& v);
-		void SetUniform(const std::string& name, const glm::uvec3& v);
-		void SetUniform(const std::string& name, const glm::uvec4& v);
-		void SetUniform(const std::string& name, const double& d);
-		void SetUniform(const std::string& name, const glm::dvec2& v);
-		void SetUniform(const std::string& name, const glm::dvec3& v);
-		void SetUniform(const std::string& name, const glm::dvec4& v);
-		//void SetUniform(const std::string& name, const Texture& t);
-
 		GLuint GetProgram() const;
+		const InputParameter* GetUniform(const std::string& name) const;
 
 	private:
 		static void CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource);
@@ -54,31 +169,5 @@ namespace GLR
 		std::map<std::string, InputParameter> m_attributes;
 		std::map<std::string, UniformBlock> m_uniformBlocks;
 		static std::vector<std::string> m_globalUniformBlocks;
-
-		struct InputParameter
-		{
-			InputParameter() : name(""), location(-1), type(0), sampler(-1)
-			{}
-			InputParameter(const std::string& name, GLint location, GLenum type, GLint sampler = -1) : name(name), location(location), type(type), sampler(sampler)
-			{}
-
-			std::string name;
-			GLint location;
-			GLenum type;
-			GLint sampler;
-		};
-
-		struct UniformBlock
-		{
-			UniformBlock() : name(""), bufferID(-1), binding(-1), size(0)
-			{}
-			UniformBlock(const std::string& name, GLint buffer, GLint binding, GLuint size) : name(name), bufferID(buffer), binding(binding), size(size)
-			{}
-
-			std::string name;
-			GLint bufferID;
-			GLint binding;
-			GLuint size;
-		};
 	};
 }

@@ -5,15 +5,15 @@
 
 std::vector<std::string> GLR::Shader::m_globalUniformBlocks;
 
-GLR::Shader::Shader(const char* computeShader) : Shader({computeShader}, {GL_COMPUTE_SHADER})
+GLR::Shader::Shader(const std::string& name, const char* computeShader) : Shader(name, {computeShader}, {GL_COMPUTE_SHADER})
 {
 }
 
-GLR::Shader::Shader(const char* vertexShader, const char* fragmentShader) : Shader({vertexShader, fragmentShader}, {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER})
+GLR::Shader::Shader(const std::string& name, const char* vertexShader, const char* fragmentShader) : Shader(name, {vertexShader, fragmentShader}, {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER})
 {
 }
 
-GLR::Shader::Shader(const char* vertexShader, const char* geometryShader, const char* fragmentShader) : Shader({vertexShader, geometryShader, fragmentShader}, {GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER})
+GLR::Shader::Shader(const std::string& name, const char* vertexShader, const char* geometryShader, const char* fragmentShader) : Shader(name, {vertexShader, geometryShader, fragmentShader}, {GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER})
 {
 }
 
@@ -22,7 +22,7 @@ GLR::Shader::Shader(const char* vertexShader, const char* geometryShader, const 
  * \param shaderFiles GLSL file location
  * \param shaderType Shader type <GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, ...>
  */
-GLR::Shader::Shader(const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType)
+GLR::Shader::Shader(const std::string& name, const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType) : ManagedItem(name, this)
 {
 #ifndef NDEBUG
 	if (shaderFiles.size() != shaderType.size())
@@ -123,232 +123,18 @@ void GLR::Shader::CheckCompatibilityMesh(const Mesh* mesh)
 	}
 }
 
-void GLR::Shader::SetUniform(const std::string& name, const float& f)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_FLOAT && "The uniform type doesn't match the input type");
-		glUniform1f(it->second.location, f);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::vec2& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_FLOAT_VEC2 && "The uniform type doesn't match the input type");
-		glUniform2fv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::vec3& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_FLOAT_VEC3 && "The uniform type doesn't match the input type");
-		glUniform3fv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::vec4& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_FLOAT_VEC4 && "The uniform type doesn't match the input type");
-		glUniform4fv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const int& i)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_INT && "The uniform type doesn't match the input type");
-		glUniform1i(it->second.location, i);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::ivec2& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_INT_VEC2 && "The uniform type doesn't match the input type");
-		glUniform2iv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::ivec3& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_INT_VEC3 && "The uniform type doesn't match the input type");
-		glUniform3iv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::ivec4& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_INT_VEC4 && "The uniform type doesn't match the input type");
-		glUniform4iv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const unsigned& u)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_UNSIGNED_INT && "The uniform type doesn't match the input type");
-		glUniform1ui(it->second.location, u);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::uvec2& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_UNSIGNED_INT_VEC2 && "The uniform type doesn't match the input type");
-		glUniform2uiv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::uvec3& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_UNSIGNED_INT_VEC3 && "The uniform type doesn't match the input type");
-		glUniform3uiv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::uvec4& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_UNSIGNED_INT_VEC4 && "The uniform type doesn't match the input type");
-		glUniform4uiv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const double& d)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_DOUBLE && "The uniform type doesn't match the input type");
-		glUniform1d(it->second.location, d);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::dvec2& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_DOUBLE_VEC2 && "The uniform type doesn't match the input type");
-		glUniform2dv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::dvec3& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_DOUBLE_VEC3 && "The uniform type doesn't match the input type");
-		glUniform3dv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-void GLR::Shader::SetUniform(const std::string& name, const glm::dvec4& v)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_DOUBLE_VEC4 && "The uniform type doesn't match the input type");
-		glUniform4dv(it->second.location, 1, &v[0]);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}
-
-/*void GLR::Shader::SetUniform(const std::string& name, const Texture& t)
-{
-	auto it = m_uniforms.find(name);
-	if (it != m_uniforms.end())
-	{
-		assert(it->second.type == GL_SAMPLER_2D && "The uniform type doesn't match the input type");
-		glActiveTexture(GL_TEXTURE0 + it->second.sampler);
-		glBindTexture(GL_TEXTURE_2D, texture.GetTexture());
-		glUniform1i(it->second.location, it->second.sampler);
-		GL_GET_ERROR();
-	}
-	else
-		LOG_E("Uniform not found");
-}*/
-
 GLuint GLR::Shader::GetProgram() const
 {
 	return m_programID;
+}
+
+const GLR::InputParameter* GLR::Shader::GetUniform(const std::string& name) const
+{
+	auto it = m_uniforms.find(name);
+	if (it != m_uniforms.end())
+		return &it->second;
+
+	LOG_E("Uniform not found");
 }
 
 void GLR::Shader::CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource)

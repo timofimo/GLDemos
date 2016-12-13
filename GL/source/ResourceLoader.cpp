@@ -5,7 +5,7 @@
 #include "Utilities.h"
 #include "Mesh.h"
 
-void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes)
+void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes, EBatchType batchType)
 {
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(file,
@@ -49,6 +49,29 @@ void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes
 		if (mesh->HasTangentsAndBitangents())
 			attributeTypes.push_back(GL_FLOAT_VEC3);
 
-		meshes.push_back(Mesh(mesh->mName.C_Str(), interleavedData.data(), mesh->mNumVertices * size, indexData.data(), mesh->mNumFaces * 3, attributeTypes));
+		if(batchType == EBatchType::None)
+			meshes.push_back(Mesh(mesh->mName.C_Str(), interleavedData.data(), mesh->mNumVertices * size, indexData.data(), mesh->mNumFaces * 3, attributeTypes));
+		else if(batchType == EBatchType::PerFile)
+		{
+			if(m_currentMeshBuffer == nullptr)
+				m_currentMeshBuffer = std::make_shared<MeshBuffer>(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+
+			if(m_currentMeshBuffer->GetAttributes() != attributeTypes)
+			{
+				m_currentMeshBuffer->Finish();
+				m_currentMeshBuffer.reset();
+				m_currentMeshBuffer = std::make_shared<MeshBuffer>(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+			}
+
+			unsigned offset = m_currentMeshBuffer->GetNumberOfIndices();
+			m_currentMeshBuffer->AddVertices(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+			meshes.push_back(Mesh(mesh->mName.C_Str(), m_currentMeshBuffer, offset, unsigned(indexData.size())));
+
+			if (i == scene->mNumMeshes - 1)
+			{
+				m_currentMeshBuffer->Finish();
+				return;
+			}
+		}
 	}
 }

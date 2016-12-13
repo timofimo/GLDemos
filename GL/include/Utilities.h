@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include <glad/glad.h>
+#include <map>
 
 namespace GLR
 {
@@ -30,6 +31,45 @@ namespace GLR
 		}
 	}
 
+	template <class T>
+	class ManagedItem
+	{
+	private:
+		static std::map<std::string, T*> m_items;
+
+	protected:
+		std::string m_name;
+
+	public:
+		ManagedItem(const std::string& name, T* ptr)
+		{
+			auto it = m_items.find(name);
+			if (it == m_items.end())
+			{
+				m_items[name] = ptr;
+				m_name = name;
+				return;
+			}
+
+			LOG_E("Item with that name already exists");
+		}
+
+		virtual ~ManagedItem()
+		{
+			m_items.erase(m_name);
+		}
+		
+		static T* GetItem(const std::string& name)
+		{
+			auto it = m_items.find(name);
+			if(it != m_items.end())
+				return it->second;
+			
+			LOG_E("No such item");
+		}
+	};
+	template<class T>
+	std::map<std::string, T*> ManagedItem<T>::m_items;
 
 #ifndef NDEBUG
 

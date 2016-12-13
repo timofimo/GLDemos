@@ -1,24 +1,28 @@
 #include "..\include\Mesh.h"
 #include "Utilities.h"
 
-GLR::Mesh::Mesh(const std::string& name, const std::shared_ptr<MeshBuffer>& meshBuffer, unsigned offset, unsigned size)
+GLR::Mesh::Mesh(const std::string& name, const std::shared_ptr<MeshBuffer>& meshBuffer, unsigned offset, unsigned size) : ManagedItem<GLR::Mesh>(name, this)
 {
-	m_name = name;
 	m_meshBuffer = meshBuffer;
 	m_bufferOffset = offset;
 	m_bufferSize = size;
 }
 
-GLR::Mesh::Mesh(const std::string& name, const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes)
+GLR::Mesh::Mesh(const std::string& name, const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes) : ManagedItem<GLR::Mesh>(name, this)
 {
-	m_name = name;
 	m_meshBuffer = std::make_shared<MeshBuffer>(vertexData, vertexDataCount, indexData, indexDataCount, attributeTypes);
+	m_meshBuffer->Finish();
 	m_bufferOffset = 0;
 	m_bufferSize = indexDataCount;
 }
 
 GLR::Mesh::~Mesh()
 {
+}
+
+bool GLR::Mesh::operator()(const Mesh& lhs, const Mesh& rhs) const
+{
+	return lhs.GetVertexArray() < rhs.GetVertexArray();
 }
 
 GLuint GLR::Mesh::GetVertexArray() const
