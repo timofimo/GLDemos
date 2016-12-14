@@ -2,6 +2,7 @@
 #include <fstream>
 #include <glad/glad.h>
 #include <map>
+#include <assert.h>
 
 namespace GLR
 {

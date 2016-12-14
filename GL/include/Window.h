@@ -51,14 +51,19 @@ namespace GLR
 		GLFWWindow(unsigned width, unsigned height, const char* title, bool borderless);
 		~GLFWWindow();
 
-
 		void Initialize(unsigned width, unsigned height, const char* title, bool borderless) override;
 		void Destroy() override;
 		void GetWindowRes(unsigned& outWidth, unsigned& outHeight) override;
 		bool ShouldClose() override;
 		void SwapBuffers() override;
+
+		static void SetInputCallback(void(*function)(int, int));
 	private:
+		static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+		static void ErrorCallback(int error, const char* description);
+
 		GLFWwindow* m_window;
 		unsigned m_width, m_height;
+		static void(*m_inputCallback)(int, int);
 	};
 }

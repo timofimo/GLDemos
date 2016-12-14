@@ -19,6 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\ExampleBase\Camera.h" />
+    <ClInclude Include="include\ExampleBase\ExampleBase.h" />
+    <ClInclude Include="include\ExampleBase\Input.h" />
+    <ClInclude Include="include\ExampleBase\Transform.h" />
     <ClInclude Include="include\GLRenderer.h" />
     <ClInclude Include="include\GL.h" />
     <ClInclude Include="include\Mesh.h" />

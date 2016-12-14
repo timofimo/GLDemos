@@ -3,6 +3,8 @@
 #include "Utilities.h"
 #include <glad/glad.h>
 
+void(*GLR::GLFWWindow::m_inputCallback)(int, int) = nullptr;
+
 GLR::GLFWWindow::GLFWWindow(): m_window(nullptr), m_width(0), m_height(0)
 {
 }
@@ -22,6 +24,8 @@ void GLR::GLFWWindow::Initialize(unsigned width, unsigned height, const char* ti
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW.");
 
+	glfwSetErrorCallback(ErrorCallback);
+	
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
@@ -47,6 +51,7 @@ void GLR::GLFWWindow::Initialize(unsigned width, unsigned height, const char* ti
 
 	glfwMakeContextCurrent(m_window);
 	glfwSwapInterval(1);
+	glfwSetKeyCallback(m_window, KeyCallback);
 
 	m_width = width;
 	m_height = height;
@@ -75,4 +80,20 @@ void GLR::GLFWWindow::SwapBuffers()
 {
 	glfwSwapBuffers(m_window);
 	glfwPollEvents();
+}
+
+void GLR::GLFWWindow::SetInputCallback(void(* function)(int, int))
+{
+	m_inputCallback = function;
+}
+
+void GLR::GLFWWindow::KeyCallback(GLFWwindow*, int key, int, int action, int)
+{
+	if (m_inputCallback != nullptr)
+		m_inputCallback(key, action);
+}
+
+void GLR::GLFWWindow::ErrorCallback(int error, const char* description)
+{
+	LOG_E("%i: %s", error, description);
 }
