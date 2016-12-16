@@ -10,6 +10,7 @@ public:
 	ExampleBase(unsigned width, unsigned height, const char* title, bool borderless) : m_window(width, height, title, borderless)
 	{
 		m_window.SetInputCallback(&Input::KeyCallback);
+		GLR::Initialize();
 	}
 
 	virtual ~ExampleBase()

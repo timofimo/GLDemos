@@ -9,10 +9,10 @@ class Transform
 {
 	enum EFlags
 	{
-		Changed = 0x01,
-		ParentChanged = 0x02,
-		OrientationChanged = 0x04,
-		OrientationChangedQ = 0x08,
+		CHANGED = 0x01,
+		PARENT_CHANGED = 0x02,
+		ORIENTATION_CHANGED = 0x04,
+		ORIENTATION_CHANGED_Q = 0x08,
 	};
 
 public:
@@ -56,13 +56,13 @@ public:
 	{
 		m_localOrientation += rotation;
 		SetChanged();
-		m_flags |= OrientationChanged;
+		m_flags |= ORIENTATION_CHANGED;
 	}
 	void Rotate(const glm::quat& rotation)
 	{
 		m_localOrientationQ *= rotation;
 		SetChanged();
-		m_flags |= OrientationChangedQ;
+		m_flags |= ORIENTATION_CHANGED_Q;
 	}
 	void Scale(const glm::vec3& scaling)
 	{
@@ -79,13 +79,13 @@ public:
 	{
 		m_localOrientation = orientation;
 		SetChanged();
-		m_flags |= OrientationChanged;
+		m_flags |= ORIENTATION_CHANGED;
 	}
 	void SetOrientation(const glm::quat& orientation)
 	{
 		m_localOrientationQ = orientation;
 		SetChanged();
-		m_flags |= OrientationChangedQ;
+		m_flags |= ORIENTATION_CHANGED_Q;
 	}
 	void SetScale(const glm::vec3& scale)
 	{
@@ -99,18 +99,18 @@ public:
 	}
 	const glm::vec3& GetOrientation()
 	{
-		if(m_flags & OrientationChangedQ)
+		if(m_flags & ORIENTATION_CHANGED_Q)
 		{
-			m_flags &= ~OrientationChangedQ;
+			m_flags &= ~ORIENTATION_CHANGED_Q;
 			m_localOrientation = glm::eulerAngles(m_localOrientationQ);
 		}
 		return m_localOrientation;
 	}
 	const glm::quat& GetOrientationQ()
 	{
-		if(m_flags & OrientationChanged)
+		if(m_flags & ORIENTATION_CHANGED)
 		{
-			m_flags &= ~OrientationChanged;
+			m_flags &= ~ORIENTATION_CHANGED;
 			m_localOrientationQ = glm::quat(m_localOrientation);
 		}
 		return m_localOrientationQ;
@@ -121,9 +121,9 @@ public:
 	}
 	const glm::mat4& GetMatrix()
 	{
-		if(m_flags & Changed)
+		if(m_flags & CHANGED)
 		{
-			m_flags &= ~Changed;
+			m_flags &= ~CHANGED;
 			m_localMatrix = glm::translate(GetPosition()) * glm::toMat4(GetOrientationQ()) * glm::scale(GetScale());
 		}
 		return m_localMatrix;
@@ -152,9 +152,9 @@ public:
 	}
 	const glm::mat4& GetWorldMatrix()
 	{
-		if (((m_flags & Changed) || (m_flags & ParentChanged)) && m_parent)
+		if (((m_flags & CHANGED) || (m_flags & PARENT_CHANGED)) && m_parent)
 		{
-			m_flags &= ~(Changed | ParentChanged);
+			m_flags &= ~(CHANGED | PARENT_CHANGED);
 			m_worldMatrix = m_parent->GetWorldMatrix() * GetMatrix();
 		}
 		
@@ -181,9 +181,9 @@ public:
 private:
 	void SetChanged()
 	{
-		if (!(m_flags & Changed))
+		if (!(m_flags & CHANGED))
 			NotifyChildrenOfChange();
-		m_flags |= Changed;
+		m_flags |= CHANGED;
 	}
 	void AnnounceToParent(Transform* parent)
 	{
@@ -197,7 +197,7 @@ private:
 	{
 		for (Transform* child : m_children)
 		{
-			child->m_flags |= ParentChanged;
+			child->m_flags |= PARENT_CHANGED;
 			child->NotifyChildrenOfChange();
 		}
 	}

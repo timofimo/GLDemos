@@ -9,10 +9,10 @@ public:
 		switch(action)
 		{
 		case GLFW_PRESS:
-			m_keyStates[key] = EKeyState::Pressed;
+			m_keyStates[key] = EKeyState::PRESSED;
 			return;
 		case GLFW_RELEASE:
-			m_keyStates[key] = EKeyState::Released;
+			m_keyStates[key] = EKeyState::RELEASED;
 			return;
 		default:
 			return;
@@ -25,8 +25,8 @@ public:
 		{
 			switch (m_keyStates[i])
 			{
-			case EKeyState::Pressed: m_keyStates[i] = EKeyState::Down; break;
-			case EKeyState::Released: m_keyStates[i] = EKeyState::Up; break;
+			case EKeyState::PRESSED: m_keyStates[i] = EKeyState::DOWN; break;
+			case EKeyState::RELEASED: m_keyStates[i] = EKeyState::UP; break;
 			default: break;
 			}
 		}
@@ -34,23 +34,23 @@ public:
 
 	static bool GetKeyDown(int key)
 	{
-		return m_keyStates[key] == EKeyState::Pressed;
+		return m_keyStates[key] == EKeyState::PRESSED;
 	}
 
 	static bool GetKeyUp(int key)
 	{
-		return m_keyStates[key] == EKeyState::Released;
+		return m_keyStates[key] == EKeyState::RELEASED;
 	}
 
 	static bool GetKey(int key)
 	{
-		return m_keyStates[key] == EKeyState::Down || m_keyStates[key] == EKeyState::Pressed;
+		return m_keyStates[key] == EKeyState::DOWN || m_keyStates[key] == EKeyState::PRESSED;
 	}
 
 private:
 	enum class EKeyState
 	{
-		Up, Pressed, Down, Released,
+		UP, PRESSED, DOWN, RELEASED,
 	} static m_keyStates[GLFW_KEY_LAST];
 };
 
