@@ -32,6 +32,7 @@ namespace GLR
 	void BindTexture(const Texture2D& texture, unsigned unit);
 
 	void SetClearColor(float r, float g, float b, float a);
+	void SetViewport(int x, int y, int width, int height);
 	void SetBlendState(bool enabled, GLuint sFactor, GLuint dFactor);
 	void SetDepthState(bool depthTest, bool depthWrite, GLuint depthCompareFunction);
 	void SetStencilState(bool stencilTest, bool stencilWrite, GLuint compareFunc, GLuint compareRef, GLuint compareMask, GLuint testFail, GLuint testDepthFail, GLuint testPass);

@@ -23,7 +23,7 @@ public:
 
 		while(!m_window.ShouldClose())
 		{
-			GLR::Clear(GL_COLOR_BUFFER_BIT);
+			GLR::Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 			double deltaTime = glfwGetTime() - startTime;
 			startTime += deltaTime;

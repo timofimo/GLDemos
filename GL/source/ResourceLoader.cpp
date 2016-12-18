@@ -5,6 +5,8 @@
 #include "Utilities.h"
 #include "Mesh.h"
 
+std::shared_ptr<GLR::MeshBuffer> GLR::ResourceLoader::m_currentMeshBuffer;
+
 void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes, EBatchType batchType)
 {
 	Assimp::Importer importer;
@@ -22,7 +24,7 @@ void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes
 	{
 		aiMesh* mesh = scene->mMeshes[i];
 
-		unsigned size = sizeof(glm::vec3) + (mesh->HasTextureCoords(0) ? sizeof(glm::vec2) : 0) + (mesh->HasNormals() ? sizeof(glm::vec3) : 0) + (mesh->HasTangentsAndBitangents() ? sizeof(glm::vec3) : 0);
+		unsigned size = 3 + (mesh->HasTextureCoords(0) ? 2 : 0) + (mesh->HasNormals() ? 3 : 0) + (mesh->HasTangentsAndBitangents() ? 3 : 0);
 		std::vector<float> interleavedData(size * mesh->mNumVertices);
 
 		for(unsigned j = 0; j < mesh->mNumVertices; j++)
@@ -53,18 +55,22 @@ void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes
 			meshes.push_back(Mesh(mesh->mName.C_Str(), interleavedData.data(), mesh->mNumVertices * size, indexData.data(), mesh->mNumFaces * 3, attributeTypes));
 		else if(batchType == EBatchType::PerFile)
 		{
-			if(m_currentMeshBuffer == nullptr)
-				m_currentMeshBuffer = std::make_shared<MeshBuffer>(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+			unsigned offset = 0;
 
-			if(m_currentMeshBuffer->GetAttributes() != attributeTypes)
+			if (m_currentMeshBuffer == nullptr)
+				m_currentMeshBuffer = std::make_shared<MeshBuffer>(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+			else
 			{
-				m_currentMeshBuffer->Finish();
-				m_currentMeshBuffer.reset();
-				m_currentMeshBuffer = std::make_shared<MeshBuffer>(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
-			}
+				offset = m_currentMeshBuffer->GetNumberOfIndices();
+				if (m_currentMeshBuffer->GetAttributes() != attributeTypes)
+				{
+					m_currentMeshBuffer->Finish();
+					m_currentMeshBuffer.reset();
+					m_currentMeshBuffer = std::make_shared<MeshBuffer>(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+				}
 
-			unsigned offset = m_currentMeshBuffer->GetNumberOfIndices();
-			m_currentMeshBuffer->AddVertices(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+				m_currentMeshBuffer->AddVertices(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
+			}
 			meshes.push_back(Mesh(mesh->mName.C_Str(), m_currentMeshBuffer, offset, unsigned(indexData.size())));
 
 			if (i == scene->mNumMeshes - 1)

@@ -1,5 +1,8 @@
 #include "..\include\Texture.h"
+#define STB_IMAGE_IMPLEMENTATION
+#pragma warning(push, 0)
 #include <stb/stb_image.h>
+#pragma warning(pop)
 
 GLR::Texture2D::Texture2D(const std::string& name, const std::string& file, int flags) : ManagedItem<GLR::Texture2D>(name, this)
 {
@@ -95,7 +98,7 @@ void GLR::Texture2D::InitializeTexture(const unsigned char* data)
 		if (m_flags & FILTERING_MIP_MAP)
 		{
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 		else
 		{

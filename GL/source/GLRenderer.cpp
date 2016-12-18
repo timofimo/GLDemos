@@ -9,6 +9,25 @@ namespace GLR
 {
 	namespace Internal
 	{
+		struct ViewportState
+		{
+			int x = -1;
+			int y = -1;
+			int width = 2;
+			int height = 2;
+
+			void SetViewport(int _x, int _y, int _width, int _height)
+			{
+				if(_x != x || _y != y || _width != width || _height != height)
+				{
+					glViewport(_x, _y, _width, _height);
+					x = _x;
+					y = _y;
+					width = _width;
+					height = _height;
+				}
+			}
+		};
 		struct BlendState
 		{
 			bool enabled = false;
@@ -149,7 +168,7 @@ namespace GLR
 
 		struct RasterizerState
 		{
-			bool cullFaceEnabled = true;
+			bool cullFaceEnabled = false;
 			GLuint cullFace = GL_BACK;
 			GLuint frontFace = GL_CCW;
 
@@ -188,6 +207,7 @@ namespace GLR
 		struct RendererState
 		{
 			// Pipeline states
+			ViewportState viewportState;
 			BlendState blendState;
 			DepthState depthState;
 			StencilState stencilState;
@@ -249,11 +269,14 @@ void GLR::BindTexture(const Texture2D& texture, unsigned unit)
 {
 	GLuint textureID = texture.GetTextureID();
 	assert(textureID != 0 && "Texture hasn't been initialized");
-	assert(textureID < Internal::rendererState.numTextureUnits);
+	assert(textureID < unsigned(Internal::rendererState.numTextureUnits));
 
 	if (textureID != Internal::rendererState.boundTextures.get()[unit])
 	{
-		glBindTexture(GL_TEXTURE_2D, GL_TEXTURE0 + unit);
+		glActiveTexture(GL_TEXTURE0 + unit);
+		GL_GET_ERROR();
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		GL_GET_ERROR();
 		Internal::rendererState.boundTextures.get()[unit] = textureID;
 	}
 }
@@ -261,6 +284,11 @@ void GLR::BindTexture(const Texture2D& texture, unsigned unit)
 void GLR::SetClearColor(float r, float g, float b, float a)
 {
 	glClearColor(r, g, b, a);
+}
+
+void GLR::SetViewport(int x, int y, int width, int height)
+{
+	Internal::rendererState.viewportState.SetViewport(x, y, width, height);
 }
 
 void GLR::SetBlendState(bool enabled, GLuint sFactor, GLuint dFactor)

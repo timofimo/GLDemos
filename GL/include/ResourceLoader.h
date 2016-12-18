@@ -19,7 +19,7 @@ namespace GLR
 		static void LoadMeshes(const char* file, std::vector<Mesh>& meshes, EBatchType batchType);
 
 	private:
-		static std::shared_ptr<MeshBuffer> m_currentMeshBuffer;	// Used for smart batching
+		static std::shared_ptr<MeshBuffer> m_currentMeshBuffer;	// Used for batching
 	};
 
 }

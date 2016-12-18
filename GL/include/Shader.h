@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include "Mesh.h"
 #include "Utilities.h"
+#include "Texture.h"
+#include "GLRenderer.h"
 
 namespace GLR
 {
@@ -111,16 +113,23 @@ namespace GLR
 			glUniform4dv(location, 1, &v[0]);
 			GL_GET_ERROR();
 		}
-		/*void SetUniform(const Texture& t) const
+		void Set(const glm::mat4& m) const
+		{
+			assert(type == GL_FLOAT_MAT4 && "The uniform type doesn't match the input type");
+			glUniformMatrix4fv(location, 1, false, &m[0][0]);
+			GL_GET_ERROR();
+		}
+		void Set(const Texture2D& t) const
 		{
 			assert(type == GL_SAMPLER_2D && "The uniform type doesn't match the input type");
-			glActiveTexture(GL_TEXTURE0 + sampler);
-			GL_GET_ERROR();
-			glBindTexture(GL_TEXTURE_2D, t.GetTexture());
-			GL_GET_ERROR();
+			/*glActiveTexture(GL_TEXTURE0 + sampler);
+			GL_GET_ERROR();*/
+			BindTexture(t, sampler);
+			/*glBindTexture(GL_TEXTURE_2D, t.GetTextureID());
+			GL_GET_ERROR();*/
 			glUniform1i(location, sampler);
 			GL_GET_ERROR();
-		}*/
+		}
 
 		std::string name;
 		GLint location;
@@ -130,15 +139,23 @@ namespace GLR
 
 	struct UniformBlock
 	{
-		UniformBlock() : name(""), bufferID(-1), binding(-1), size(0)
+		UniformBlock() : name(""), bufferID(-1), binding(-1), bufferSize(0)
 		{}
-		UniformBlock(const std::string& name, GLint buffer, GLint binding, GLuint size) : name(name), bufferID(buffer), binding(binding), size(size)
+		UniformBlock(const std::string& name, GLint buffer, GLint binding, GLuint size) : name(name), bufferID(buffer), binding(binding), bufferSize(size)
 		{}
+
+		void UpdateContents(const char* data, unsigned size, unsigned offset) const
+		{
+			glBindBuffer(GL_UNIFORM_BUFFER, bufferID);
+			glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
+			GL_GET_ERROR();
+			glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		}
 
 		std::string name;
 		GLint bufferID;
 		GLint binding;
-		GLuint size;
+		GLuint bufferSize;
 	};
 
 	class Shader : public ManagedItem<Shader>
@@ -155,6 +172,7 @@ namespace GLR
 
 		GLuint GetProgram() const;
 		const InputParameter* GetUniform(const std::string& name) const;
+		const UniformBlock* GetUniformBlock(const std::string& name) const;
 
 	private:
 		static void CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource);

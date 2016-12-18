@@ -11,19 +11,17 @@ class Transform
 	{
 		CHANGED = 0x01,
 		PARENT_CHANGED = 0x02,
-		ORIENTATION_CHANGED = 0x04,
-		ORIENTATION_CHANGED_Q = 0x08,
 	};
 
 public:
-	Transform() : m_localPosition(), m_localOrientation(), m_localOrientationQ(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF){}
-	Transform(const glm::vec3& position) : m_localPosition(position), m_localOrientation(), m_localOrientationQ(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
-	Transform(const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localOrientationQ(), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
-	Transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(), m_localOrientationQ(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
-	Transform(Transform* parent) : m_localPosition(), m_localOrientation(), m_localOrientationQ(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
-	Transform(Transform* parent, const glm::vec3& position) : m_localPosition(position), m_localOrientation(), m_localOrientationQ(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
-	Transform(Transform* parent, const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localOrientationQ(), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
-	Transform(Transform* parent, const glm::vec3& position, const glm::quat& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(), m_localOrientationQ(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
+	Transform() : m_localPosition(), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF){}
+	Transform(const glm::vec3& position) : m_localPosition(position), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
+	Transform(const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
+	Transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
+	Transform(Transform* parent) : m_localPosition(), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
+	Transform(Transform* parent, const glm::vec3& position) : m_localPosition(position), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
+	Transform(Transform* parent, const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
+	Transform(Transform* parent, const glm::vec3& position, const glm::quat& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
 	~Transform()
 	{
 		RemoveFromParent(m_parent);
@@ -41,12 +39,10 @@ public:
 		if(parent)
 			AnnounceToParent(parent);
 	}
-	void Translate(const glm::vec3& translation, bool worldSpace = true)
+	void Translate(const glm::vec3& translation, bool worldSpace = false)
 	{
 		if (worldSpace)
-		{
-			m_localPosition += GetRight() * translation.x + GetUp() * translation.y + GetForward() * translation.z;
-		}
+			m_localPosition += glm::inverse(GetWorldOrientation()) * translation;
 		else
 			m_localPosition += translation;
 
@@ -54,15 +50,13 @@ public:
 	}
 	void Rotate(const glm::vec3& rotation)
 	{
-		m_localOrientation += rotation;
+		m_localOrientation *= glm::quat(rotation);
 		SetChanged();
-		m_flags |= ORIENTATION_CHANGED;
 	}
 	void Rotate(const glm::quat& rotation)
 	{
-		m_localOrientationQ *= rotation;
+		m_localOrientation = rotation * m_localOrientation;
 		SetChanged();
-		m_flags |= ORIENTATION_CHANGED_Q;
 	}
 	void Scale(const glm::vec3& scaling)
 	{
@@ -77,15 +71,13 @@ public:
 	}
 	void SetOrientation(const glm::vec3& orientation)
 	{
-		m_localOrientation = orientation;
+		m_localOrientation = glm::quat(orientation);
 		SetChanged();
-		m_flags |= ORIENTATION_CHANGED;
 	}
 	void SetOrientation(const glm::quat& orientation)
 	{
-		m_localOrientationQ = orientation;
+		m_localOrientation = orientation;
 		SetChanged();
-		m_flags |= ORIENTATION_CHANGED_Q;
 	}
 	void SetScale(const glm::vec3& scale)
 	{
@@ -97,23 +89,13 @@ public:
 	{
 		return m_localPosition;
 	}
-	const glm::vec3& GetOrientation()
+	glm::vec3 GetOrientationEuler() const
 	{
-		if(m_flags & ORIENTATION_CHANGED_Q)
-		{
-			m_flags &= ~ORIENTATION_CHANGED_Q;
-			m_localOrientation = glm::eulerAngles(m_localOrientationQ);
-		}
-		return m_localOrientation;
+		return glm::eulerAngles(m_localOrientation);
 	}
-	const glm::quat& GetOrientationQ()
+	const glm::quat& GetOrientation() const
 	{
-		if(m_flags & ORIENTATION_CHANGED)
-		{
-			m_flags &= ~ORIENTATION_CHANGED;
-			m_localOrientationQ = glm::quat(m_localOrientation);
-		}
-		return m_localOrientationQ;
+		return m_localOrientation;
 	}
 	const glm::vec3& GetScale() const
 	{
@@ -124,24 +106,20 @@ public:
 		if(m_flags & CHANGED)
 		{
 			m_flags &= ~CHANGED;
-			m_localMatrix = glm::translate(GetPosition()) * glm::toMat4(GetOrientationQ()) * glm::scale(GetScale());
+			m_localMatrix = glm::translate(GetPosition()) * glm::toMat4(GetOrientation()) * glm::scale(GetScale());
 		}
 		return m_localMatrix;
 	}
 	glm::vec3 GetWorldPosition()
 	{
-		return GetWorldMatrix() * glm::vec4(m_localPosition.x, m_localPosition.y, m_localPosition.z, 1.0f);
+		return glm::vec3(GetWorldMatrix()[3]);
 	}
-	glm::vec3 GetWorldOrientation()
+	glm::quat GetWorldOrientation() const
 	{
 		if (m_parent)
-			return m_parent->GetWorldOrientation() + GetOrientation();
+			return m_parent->GetWorldOrientation() * GetOrientation();
 
 		return GetOrientation();
-	}
-	glm::quat GetWorldOrientationQ()
-	{
-		return glm::quat(GetWorldMatrix());
 	}
 	glm::vec3 GetWorldScale() const
 	{
@@ -152,25 +130,30 @@ public:
 	}
 	const glm::mat4& GetWorldMatrix()
 	{
-		if (((m_flags & CHANGED) || (m_flags & PARENT_CHANGED)) && m_parent)
+		if (m_parent)
 		{
-			m_flags &= ~(CHANGED | PARENT_CHANGED);
-			m_worldMatrix = m_parent->GetWorldMatrix() * GetMatrix();
+			if ((m_flags & CHANGED) || (m_flags & PARENT_CHANGED))
+			{
+				m_flags &= ~(CHANGED | PARENT_CHANGED);
+				m_worldMatrix = m_parent->GetWorldMatrix() * GetMatrix();
+			}
 		}
+		else if (m_flags & CHANGED)
+			m_worldMatrix = GetMatrix();
 		
 		return m_worldMatrix;
 	}
-	glm::vec3 GetForward()
+	glm::vec3 GetForward() const
 	{
-		return glm::mat3(GetWorldMatrix()) * glm::vec3(0.0f, 0.0f, 1.0f);
+		return glm::normalize(GetWorldOrientation() * glm::vec3(0.0f, 0.0f, 1.0f));
 	}
-	glm::vec3 GetRight()
+	glm::vec3 GetRight() const
 	{
-		return glm::mat3(GetWorldMatrix()) * glm::vec3(1.0f, 0.0f, 0.0f);
+		return glm::normalize(GetWorldOrientation() * glm::vec3(-1.0f, 0.0f, 0.0f));
 	}
-	glm::vec3 GetUp()
+	glm::vec3 GetUp() const
 	{
-		return glm::mat3(GetWorldMatrix()) * glm::vec3(0.0f, 1.0f, 0.0f);
+		return glm::normalize(GetWorldOrientation() * glm::vec3(0.0f, 1.0f, 0.0f));
 	}
 	glm::mat4 GetViewMatrix()
 	{
@@ -191,7 +174,8 @@ private:
 	}
 	void RemoveFromParent(Transform* parent)
 	{
-		parent->m_children.erase(std::remove_if(parent->m_children.begin(), parent->m_children.end(), this));
+		if(parent)
+			parent->m_children.erase(std::remove_if(parent->m_children.begin(), parent->m_children.end(), [this](const Transform* other) {return other == this; }));
 	}
 	void NotifyChildrenOfChange()
 	{
@@ -203,8 +187,7 @@ private:
 	}
 
 	glm::vec3 m_localPosition;
-	glm::vec3 m_localOrientation;
-	glm::quat m_localOrientationQ;
+	glm::quat m_localOrientation;
 	glm::vec3 m_localScale;
 	glm::mat4 m_localMatrix;
 	glm::mat4 m_worldMatrix;
@@ -212,5 +195,5 @@ private:
 	Transform* m_parent;
 	std::vector<Transform*> m_children;
 
-	char m_flags;
+	unsigned char m_flags;
 };

@@ -137,6 +137,15 @@ const GLR::InputParameter* GLR::Shader::GetUniform(const std::string& name) cons
 	LOG_E("Uniform not found");
 }
 
+const GLR::UniformBlock* GLR::Shader::GetUniformBlock(const std::string& name) const
+{
+	auto it = m_uniformBlocks.find(name);
+	if (it != m_uniformBlocks.end())
+		return &it->second;
+
+	LOG_E("Uniform block not found");
+}
+
 void GLR::Shader::CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource)
 {
 	GLint status;
@@ -330,7 +339,8 @@ void GLR::Shader::LoadUniformBlocks()
 			GLuint buffer;
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_UNIFORM_BUFFER, buffer);
-			glBufferData(GL_UNIFORM_BUFFER, bufferSize, NULL, GL_STREAM_DRAW);
+			std::unique_ptr<char> nullMemory(new char[bufferSize]); // Fixes buffer not updating
+			glBufferData(GL_UNIFORM_BUFFER, bufferSize, nullMemory.get(), GL_STREAM_DRAW);
 
 			// Bind this programs uniform block to this buffer
 			glBindBufferBase(GL_UNIFORM_BUFFER, bindingCount, buffer);
