@@ -5,6 +5,7 @@
 #include "ResourceLoader.h"
 #include "ExampleBase/Camera.h"
 #include "Framebuffer.h"
+#include "Light.h"
 
 class DeferredDemo : public ExampleBase
 {
@@ -33,6 +34,9 @@ public:
 		m_camera.SetPosition(glm::vec3(0.0f, 0.0f, -10.0f));
 
 		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {4, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
+
+		GLR::PointLight pl(glm::vec3(), glm::vec4(1.0f), 0.01f, 0.0f, 0.0f);
+		printf_s("%f\n", pl.GetRange());
 	}
 	~DeferredDemo()
 	{

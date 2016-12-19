@@ -2,7 +2,7 @@
 
 float CalculateRange(const glm::vec4& color, float exponent, float linear, float constant)
 {
-	constant -= (258.0f/*Increase to reduce the range*/ / 256.0f) * color.a * glm::max(glm::max(color.x, color.y), color.z);
+	constant -= 256.0f * color.a * glm::max(glm::max(color.x, color.y), color.z);
 	return (-linear + sqrt(linear * linear - 4 * exponent * constant)) / (2.0f * exponent);
 }
 
