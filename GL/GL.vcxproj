@@ -26,6 +26,7 @@
     <ClInclude Include="include\Framebuffer.h" />
     <ClInclude Include="include\GLRenderer.h" />
     <ClInclude Include="include\GL.h" />
+    <ClInclude Include="include\Light.h" />
     <ClInclude Include="include\Mesh.h" />
     <ClInclude Include="include\MeshBuffer.h" />
     <ClInclude Include="include\Model.h" />
@@ -39,6 +40,7 @@
     <ClCompile Include="include\glad.c" />
     <ClCompile Include="source\Framebuffer.cpp" />
     <ClCompile Include="source\GLRenderer.cpp" />
+    <ClCompile Include="source\Light.cpp" />
     <ClCompile Include="source\Mesh.cpp" />
     <ClCompile Include="source\MeshBuffer.cpp" />
     <ClCompile Include="source\Model.cpp" />
