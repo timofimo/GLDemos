@@ -122,11 +122,7 @@ namespace GLR
 		void Set(const Texture2D& t) const
 		{
 			assert(type == GL_SAMPLER_2D && "The uniform type doesn't match the input type");
-			/*glActiveTexture(GL_TEXTURE0 + sampler);
-			GL_GET_ERROR();*/
 			BindTexture(t, sampler);
-			/*glBindTexture(GL_TEXTURE_2D, t.GetTextureID());
-			GL_GET_ERROR();*/
 			glUniform1i(location, sampler);
 			GL_GET_ERROR();
 		}

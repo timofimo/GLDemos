@@ -4,6 +4,7 @@
 #include "Mesh.h"
 #include "Utilities.h"
 #include "Texture.h"
+#include "Framebuffer.h"
 
 namespace GLR
 {
@@ -218,6 +219,7 @@ namespace GLR
 			GLuint boundVertexArray = 0;
 			GLint numTextureUnits = 0;
 			std::unique_ptr<GLuint> boundTextures = nullptr;
+			GLuint boundFramebuffer = 0;
 		} rendererState;
 	}
 }
@@ -281,6 +283,27 @@ void GLR::BindTexture(const Texture2D& texture, unsigned unit)
 	}
 }
 
+void GLR::BindFramebuffer(const Framebuffer& framebuffer)
+{
+	GLuint framebufferID = framebuffer.GetFramebufferID();
+	assert(framebufferID != 0 && "Framebuffer hasn't been initialized");
+
+	if(framebufferID != Internal::rendererState.boundFramebuffer)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.GetFramebufferID());
+		Internal::rendererState.boundFramebuffer = framebufferID;
+	}
+}
+
+void GLR::UnbindFramebuffer()
+{
+	if (Internal::rendererState.boundFramebuffer != 0)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		Internal::rendererState.boundFramebuffer = 0;
+	}
+}
+
 void GLR::SetClearColor(float r, float g, float b, float a)
 {
 	glClearColor(r, g, b, a);
@@ -317,4 +340,9 @@ void GLR::SetRasterizationState(bool faceCulling, GLuint cullFace, GLuint windin
 	Internal::rendererState.rasterizerState.SetActive(faceCulling);
 	Internal::rendererState.rasterizerState.SetCullFace(cullFace);
 	Internal::rendererState.rasterizerState.SetFrontFace(windingOrder);
+}
+
+GLuint GLR::GetMaxTextureUnit()
+{
+	return Internal::rendererState.numTextureUnits;
 }

@@ -4,20 +4,21 @@
 #include <ExampleBase/ExampleBase.h>
 #include "ResourceLoader.h"
 #include "ExampleBase/Camera.h"
+#include "Framebuffer.h"
 
-class CubeDemo : public ExampleBase
+class DeferredDemo : public ExampleBase
 {
 public:
-	CubeDemo(unsigned width, unsigned height, const char* title, bool borderless)
+	DeferredDemo(unsigned width, unsigned height, const char* title, bool borderless)
 		: ExampleBase(width, height, title, borderless), m_camera(glm::radians(60.0f), float(width) / float(height), 0.1f, 100.0f)
 	{
-		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/CubeDemo/res/meshes/cube.fbx", m_meshes, GLR::EBatchType::PerFile);
+		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/DeferredDemo/res/meshes/cube.fbx", m_meshes, GLR::EBatchType::PerFile);
 		m_cube = &m_meshes[0];
 
 		GLR::Shader::AddGlobalUniformBlock("CameraBlock");
-		m_shader = std::make_unique<GLR::Shader>("SimpleShader", "D:/Programming/GLDemos/CubeDemo/res/shaders/CubeDemo.vert", "D:/Programming/GLDemos/CubeDemo/res/shaders/CubeDemo.frag");
+		m_shader = std::make_unique<GLR::Shader>("SimpleShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/deferredDemo.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/deferredDemo.frag");
 
-		m_texture = std::make_unique<GLR::Texture2D>("Texture", "D:/Programming/GLDemos/CubeDemo/res/textures/brick.jpg", GLR::ETextureFlags::FILTERING_LINEAR | GLR::ETextureFlags::FILTERING_MIP_MAP);
+		m_texture = std::make_unique<GLR::Texture2D>("Texture", "D:/Programming/GLDemos/DeferredDemo/res/textures/brick.jpg", GLR::ETextureFlags::FILTERING_LINEAR | GLR::ETextureFlags::FILTERING_MIP_MAP);
 
 		GLR::BindMesh(*m_cube);
 		GLR::BindShader(*m_shader);
@@ -30,8 +31,10 @@ public:
 		m_shader->GetUniform("textureSampler")->Set(*m_texture);
 
 		m_camera.SetPosition(glm::vec3(0.0f, 0.0f, -10.0f));
+
+		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {4, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
 	}
-	~CubeDemo()
+	~DeferredDemo()
 	{
 	}
 
@@ -42,14 +45,19 @@ public:
 
 	virtual void Render() override
 	{
+		GLR::BindTexture(*m_texture, 0);
 		glm::mat4 viewProjectionMatrix = m_camera.GetViewProjectionMatrix();
 		m_shader->GetUniformBlock("CameraBlock")->UpdateContents(reinterpret_cast<char*>(&viewProjectionMatrix), sizeof(glm::mat4), 0);
 
 		const GLR::InputParameter* modelMatrix = m_shader->GetUniform("modelMatrix");
 		modelMatrix->Set(glm::rotate(float(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f)));
 		GLR::DrawIndexed(36);
+
+		GLR::BindFramebuffer(*m_framebuffer);
+		GLR::Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		modelMatrix->Set(glm::translate(glm::vec3(0.0f, 0.0f, 3.0f)) * glm::rotate(float(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f)));
 		GLR::DrawIndexed(36);
+		GLR::UnbindFramebuffer();
 	}
 
 private:
@@ -58,12 +66,13 @@ private:
 	std::unique_ptr<GLR::Shader> m_shader;
 	std::unique_ptr<GLR::Texture2D> m_texture;
 	Camera m_camera;
+	std::unique_ptr<GLR::Framebuffer> m_framebuffer;
 };
 
 int main()
 {
-	CubeDemo CubeDemo(640, 480, "CubeDemo", false);
-	CubeDemo.StartGameLoop();
+	DeferredDemo DeferredDemo(640, 480, "DeferredDemo", false);
+	DeferredDemo.StartGameLoop();
 
 	return 0;
 }

@@ -18,6 +18,8 @@ namespace GLR
 	public:
 		Texture2D(const std::string& name, const std::string& file, int flags = NONE);
 		Texture2D(const std::string& name, const unsigned char* data, int width, int height, int channels, int flags = NONE);
+		Texture2D(const std::string& name, int width, int height, int channels, GLenum dataType);
+		Texture2D(const std::string& name, int width, int height, GLenum depthBufferFormat);
 		~Texture2D();
 
 		int GetWidth() const;
@@ -31,6 +33,7 @@ namespace GLR
 
 		GLuint m_textureID;
 		int m_width, m_height, m_channels, m_flags;
+		GLenum m_dataType, m_internalFormat, m_format;
 	};
 
 }

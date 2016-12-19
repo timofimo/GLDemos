@@ -4,6 +4,7 @@
 
 namespace GLR
 {
+	class Framebuffer;
 	class Texture2D;
 	class Shader;
 	class Mesh;
@@ -30,6 +31,9 @@ namespace GLR
 	void BindMesh(const Mesh& mesh);
 	void BindShader(const Shader& shader);
 	void BindTexture(const Texture2D& texture, unsigned unit);
+	void BindFramebuffer(const Framebuffer& framebuffer);
+	
+	void UnbindFramebuffer();
 
 	void SetClearColor(float r, float g, float b, float a);
 	void SetViewport(int x, int y, int width, int height);
@@ -37,4 +41,6 @@ namespace GLR
 	void SetDepthState(bool depthTest, bool depthWrite, GLuint depthCompareFunction);
 	void SetStencilState(bool stencilTest, bool stencilWrite, GLuint compareFunc, GLuint compareRef, GLuint compareMask, GLuint testFail, GLuint testDepthFail, GLuint testPass);
 	void SetRasterizationState(bool faceCulling, GLuint cullFace, GLuint windingOrder);
+
+	GLuint GetMaxTextureUnit();
 }
