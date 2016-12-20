@@ -7,7 +7,7 @@ float CalculateRange(const glm::vec4& color, float exponent, float linear, float
 }
 
 
-GLR::DirectionalLight::DirectionalLight(const glm::vec3& direction, const glm::vec4& color) : m_direction(glm::normalize(direction)), m_color(color)
+GLR::DirectionalLight::DirectionalLight(const glm::vec3& direction, const glm::vec4& color) : m_direction(glm::normalize(direction)), m_color(color), Light<GLR::DirectionalLight>(this)
 {
 }
 
@@ -22,7 +22,7 @@ const glm::vec4& GLR::DirectionalLight::GetColor() const
 }
 
 GLR::PointLight::PointLight(const glm::vec3& position, const glm::vec4& color, float exponent, float linear, float constant) : m_position(position), m_range(CalculateRange(color, exponent, linear, constant)), 
-m_color(color), m_exponent(exponent), m_linear(linear), m_constant(constant)
+m_color(color), m_exponent(exponent), m_linear(linear), m_constant(constant), Light<GLR::PointLight>(this)
 {
 }
 
@@ -58,7 +58,7 @@ float GLR::PointLight::GetAttenuationConstant() const
 
 GLR::SpotLight::SpotLight(const glm::vec3& position, const glm::vec3& direction, const glm::vec4& color, float exponent, float linear, float constant, float innerConeAngle, float outerConeAngle) : m_position(position),
 m_direction(glm::normalize(direction)), m_range(CalculateRange(color, exponent, linear, constant)), m_color(color), m_exponent(exponent), m_linear(linear), m_constant(constant), m_innerCutoff(glm::cos(glm::radians(innerConeAngle))), 
-m_outerCutoff(glm::cos(glm::radians(outerConeAngle)))
+m_outerCutoff(glm::cos(glm::radians(outerConeAngle))), Light<GLR::SpotLight>(this)
 {
 }
 
