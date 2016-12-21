@@ -5,6 +5,7 @@
 #include "Utilities.h"
 #include "Texture.h"
 #include "Framebuffer.h"
+#include <queue>
 
 namespace GLR
 {
@@ -226,8 +227,31 @@ namespace GLR
 		{
 			unsigned bufferID;
 			unsigned count;
+
+			DrawCommandBuffer() : bufferID(0), count(0){}
+			DrawCommandBuffer(const void* data, unsigned size, unsigned count) : count(count)
+			{
+				glGenBuffers(1, &bufferID);
+				GL_GET_ERROR();
+
+				glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bufferID);
+				GL_GET_ERROR();
+				glBufferData(GL_DRAW_INDIRECT_BUFFER, size, data, GL_STATIC_DRAW);
+				GL_GET_ERROR();
+
+				glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+			}
+			~DrawCommandBuffer()
+			{
+				if(bufferID != 0)
+				{
+					glDeleteBuffers(1, &bufferID);
+					bufferID = 0;
+				}
+			}
 		};
 		std::vector<DrawCommandBuffer> m_drawCommandBuffers;
+		std::queue<unsigned> m_availableDrawCommandSlots;
 	}
 }
 
@@ -262,22 +286,24 @@ void GLR::DrawIndexedIndirect(unsigned bufferIndex)
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 }
 
-unsigned GLR::CreateDrawCommandsBuffer(const std::vector<DrawElementsIndirectCommand>& drawCommands)
+unsigned GLR::CreateDrawCommandBuffer(const std::vector<DrawElementsIndirectCommand>& drawCommands)
 {
-	GLuint bufferID = 0;
-	glGenBuffers(1, &bufferID);
-	GL_GET_ERROR();
+	if (Internal::m_availableDrawCommandSlots.empty())
+	{
+		Internal::m_drawCommandBuffers.push_back(std::move(Internal::DrawCommandBuffer(drawCommands.data(), sizeof(GLR::DrawElementsIndirectCommand) * unsigned(drawCommands.size()), unsigned(drawCommands.size()))));
+		return unsigned(Internal::m_drawCommandBuffers.size()) - 1;
+	}
 
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bufferID);
-	GL_GET_ERROR();
-	glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(GLR::DrawElementsIndirectCommand) * unsigned(drawCommands.size()), drawCommands.data(), GL_STATIC_DRAW);
-	GL_GET_ERROR();
+	unsigned i = Internal::m_availableDrawCommandSlots.front();
+	Internal::m_availableDrawCommandSlots.pop();
+	Internal::m_drawCommandBuffers[i] = std::move(Internal::DrawCommandBuffer(drawCommands.data(), sizeof(GLR::DrawElementsIndirectCommand) * unsigned(drawCommands.size()), unsigned(drawCommands.size())));
+	return i;
+}
 
-	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-
-	Internal::m_drawCommandBuffers.push_back({ bufferID, unsigned(drawCommands.size()) });
-
-	return unsigned(Internal::m_drawCommandBuffers.size()) - 1;
+void GLR::DestroyDrawCommandBuffer(unsigned index)
+{
+	Internal::m_drawCommandBuffers[index] = Internal::DrawCommandBuffer();
+	Internal::m_availableDrawCommandSlots.push(index);
 }
 
 void GLR::BindMesh(const Mesh& mesh)

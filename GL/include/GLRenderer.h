@@ -39,7 +39,8 @@ namespace GLR
 	void DrawIndexed(unsigned count, unsigned offset = 0);
 	void DrawIndexedIndirect(unsigned bufferIndex);
 
-	unsigned CreateDrawCommandsBuffer(const std::vector<DrawElementsIndirectCommand>& drawCommands);
+	unsigned CreateDrawCommandBuffer(const std::vector<DrawElementsIndirectCommand>& drawCommands);
+	void DestroyDrawCommandBuffer(unsigned index);
 
 	void BindMesh(const Mesh& mesh);
 	void BindShader(const Shader& shader);

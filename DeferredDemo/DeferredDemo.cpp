@@ -7,19 +7,12 @@
 #include "Framebuffer.h"
 #include "Light.h"
 
-void APIENTRY error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void*)
-{
-	printf_s("%u - %u - %u - %u - %u - %s\n", source, type, id, severity, length, message);
-}
-
 class DeferredDemo : public ExampleBase
 {
 public:
 	DeferredDemo(unsigned width, unsigned height, const char* title, bool borderless)
 		: ExampleBase(width, height, title, borderless), m_camera(glm::radians(60.0f), float(width) / float(height), 0.1f, 2000.0f)
 	{
-		glEnable(GL_DEBUG_OUTPUT);
-		glDebugMessageCallback(error_callback, nullptr);
 		//GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/DeferredDemo/res/meshes/cube.fbx", m_meshes, GLR::EBatchType::PerFile);
 		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/sponza/sponza.fbx", m_meshes, GLR::EBatchType::PerFile);
 
@@ -62,7 +55,7 @@ public:
 				{
 					if (!drawCommands.empty())
 					{
-						m_commandBuffers.push_back(GLR::CreateDrawCommandsBuffer(drawCommands));
+						m_commandBuffers.push_back(GLR::CreateDrawCommandBuffer(drawCommands));
 						drawCommands.clear();
 					}
 					GLR::BindMesh(m_meshes[i]);
@@ -70,7 +63,7 @@ public:
 				}
 				drawCommands.push_back({ m_meshes[i].GetIndexCount(), 1, m_meshes[i].GetIndexOffset(), 0, 0 });
 				if (i == unsigned(m_meshes.size()) - 1)
-					m_commandBuffers.push_back(GLR::CreateDrawCommandsBuffer(drawCommands));
+					m_commandBuffers.push_back(GLR::CreateDrawCommandBuffer(drawCommands));
 			}
 		}
 	}
