@@ -1,14 +1,22 @@
 #include "..\include\MeshBuffer.h"
 #include "Utilities.h"
 
+struct AttributeInformation
+{
+	unsigned size;
+	unsigned type;
+	UINT64 offset;
+};
 
-GLR::MeshBuffer::MeshBuffer(const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes) : m_attributes(attributeTypes)
+GLR::MeshBuffer::MeshBuffer(const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes)
 {
 	m_vertexData.resize(vertexDataCount);
 	memcpy(m_vertexData.data(), vertexData, vertexDataCount * sizeof(float));
 
 	m_indexData.resize(indexDataCount);
 	memcpy(m_indexData.data(), indexData, indexDataCount * sizeof(unsigned));
+
+	SetAttributes(attributeTypes);
 }
 
 GLR::MeshBuffer::~MeshBuffer()
@@ -54,19 +62,13 @@ void GLR::MeshBuffer::Finish()
 	glBufferData(GL_ARRAY_BUFFER, m_vertexData.size() * sizeof(float), m_vertexData.data(), GL_STATIC_DRAW);
 	GL_GET_ERROR();
 
-	struct AttributeInformation
-	{
-		unsigned size;
-		unsigned type;
-		UINT64 offset;
-	};
 	std::vector<AttributeInformation> attributeInformation(m_attributes.size());
 	unsigned stride = 0;
 	for (unsigned i = 0; i < unsigned(m_attributes.size()); i++)
 	{
 		GetAttributeTypeInformation(m_attributes[i], attributeInformation[i].size, attributeInformation[i].type);
 		attributeInformation[i].offset = stride;
-		stride += attributeInformation[i].size * 4;
+		stride += attributeInformation[i].size * sizeof(float);
 	}
 
 	for (unsigned i = 0; i < unsigned(m_attributes.size()); i++)
@@ -119,6 +121,25 @@ const std::vector<GLenum>& GLR::MeshBuffer::GetAttributes() const
 unsigned GLR::MeshBuffer::GetNumberOfIndices() const
 {
 	return unsigned(m_indexData.size());
+}
+
+unsigned GLR::MeshBuffer::GetNumberOfVertices() const
+{
+	return unsigned(m_vertexData.size()) / m_attributesSize;
+}
+
+void GLR::MeshBuffer::SetAttributes(const std::vector<GLenum>& attributes)
+{
+	m_attributes = attributes;
+
+	unsigned stride = 0;
+	for (unsigned i = 0; i < unsigned(m_attributes.size()); i++)
+	{
+		AttributeInformation attributeInformation;
+		GetAttributeTypeInformation(m_attributes[i], attributeInformation.size, attributeInformation.type);
+		stride += attributeInformation.size;
+	}
+	m_attributesSize = stride;
 }
 
 void GLR::MeshBuffer::GetAttributeTypeInformation(GLenum type, unsigned& size, unsigned& baseType) const

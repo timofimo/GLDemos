@@ -133,7 +133,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>glfw3.lib; assimp-vc140-mt.lib; opengl32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>./lib/debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./lib/deb</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -170,7 +170,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>glfw3.lib; assimp-vc140-mt.lib; opengl32.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>./lib/release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./lib/rel</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

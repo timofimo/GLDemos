@@ -1,5 +1,6 @@
 #pragma once
 #include <glad/glad.h>
+#include <vector>
 
 
 namespace GLR
@@ -8,6 +9,15 @@ namespace GLR
 	class Texture2D;
 	class Shader;
 	class Mesh;
+
+	struct DrawElementsIndirectCommand
+	{
+		unsigned count;
+		unsigned primCount;
+		unsigned firstIndex;
+		unsigned baseVertex;
+		unsigned baseInstance;
+	};
 
 	enum class EAttributeLayout
 	{
@@ -26,7 +36,10 @@ namespace GLR
 	void Initialize();
 
 	void Clear(GLbitfield mask);
-	void DrawIndexed(unsigned count);
+	void DrawIndexed(unsigned count, unsigned offset = 0);
+	void DrawIndexedIndirect(unsigned bufferIndex);
+
+	unsigned CreateDrawCommandsBuffer(const std::vector<DrawElementsIndirectCommand>& drawCommands);
 
 	void BindMesh(const Mesh& mesh);
 	void BindShader(const Shader& shader);

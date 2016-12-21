@@ -8,6 +8,7 @@ namespace GLR
 	class MeshBuffer
 	{
 	public:
+
 		MeshBuffer(const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes);
 		~MeshBuffer();
 
@@ -17,8 +18,9 @@ namespace GLR
 		GLuint GetVertexArray() const;
 		const std::vector<GLenum>& GetAttributes() const;
 		unsigned GetNumberOfIndices() const;
-
+		unsigned GetNumberOfVertices() const;
 	private:
+		void SetAttributes(const std::vector<GLenum>& attributes);
 		void GetAttributeTypeInformation(GLenum type, unsigned& size, unsigned& baseType) const;
 
 		std::vector<float> m_vertexData;
@@ -27,7 +29,8 @@ namespace GLR
 		GLuint m_vbo = 0;
 		GLuint m_ibo = 0;
 		GLuint m_vao = 0;
-		const std::vector<GLenum> m_attributes;
+		std::vector<GLenum> m_attributes;
+		unsigned m_attributesSize;
 	};
 
 }

@@ -1,11 +1,21 @@
 #include "..\include\Light.h"
+#include "Utilities.h"
+#undef max
 
 float CalculateRange(const glm::vec4& color, float exponent, float linear, float constant)
 {
+	if (exponent == 0.0f)
+	{
+		LOG_E("Light attenuation exponent can not be 0.0");
+	}
 	constant -= 256.0f * color.a * glm::max(glm::max(color.x, color.y), color.z);
 	return (-linear + sqrt(linear * linear - 4 * exponent * constant)) / (2.0f * exponent);
 }
 
+
+GLR::DirectionalLight::DirectionalLight() : DirectionalLight(glm::vec3(), glm::vec4())
+{
+}
 
 GLR::DirectionalLight::DirectionalLight(const glm::vec3& direction, const glm::vec4& color) : m_direction(glm::normalize(direction)), m_color(color), Light<GLR::DirectionalLight>(this)
 {
@@ -19,6 +29,10 @@ const glm::vec3& GLR::DirectionalLight::GetDirection() const
 const glm::vec4& GLR::DirectionalLight::GetColor() const
 {
 	return m_color;
+}
+
+GLR::PointLight::PointLight() : PointLight(glm::vec3(), glm::vec4(), 1.0f, 0.0f, 0.0f)
+{
 }
 
 GLR::PointLight::PointLight(const glm::vec3& position, const glm::vec4& color, float exponent, float linear, float constant) : m_position(position), m_range(CalculateRange(color, exponent, linear, constant)), 
@@ -54,6 +68,10 @@ float GLR::PointLight::GetAttenuationLinear() const
 float GLR::PointLight::GetAttenuationConstant() const
 {
 	return m_constant;
+}
+
+GLR::SpotLight::SpotLight() : SpotLight(glm::vec3(), glm::vec3(), glm::vec4(), 1.0f, 0.0f, 0.0f, 0.0f, 0.0f)
+{
 }
 
 GLR::SpotLight::SpotLight(const glm::vec3& position, const glm::vec3& direction, const glm::vec4& color, float exponent, float linear, float constant, float innerConeAngle, float outerConeAngle) : m_position(position),

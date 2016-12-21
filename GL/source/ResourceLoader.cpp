@@ -39,8 +39,21 @@ void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes
 		}
 
 		std::vector<unsigned> indexData(mesh->mNumFaces * 3);
-		for(unsigned j = 0; j < mesh->mNumFaces; j++)
+		unsigned vertexOffset = 0;
+		if (m_currentMeshBuffer)
+			vertexOffset = m_currentMeshBuffer->GetNumberOfVertices();
+
+		for (unsigned j = 0; j < mesh->mNumFaces; j++)
+		{
+			if (mesh->mFaces[j].mNumIndices != 3)
+				LOG_E("Meshes should be triangulated");
 			memcpy(&indexData[j * 3], mesh->mFaces[j].mIndices, sizeof(unsigned) * 3);
+			if(batchType == EBatchType::PerFile)
+			{
+				for (unsigned k = 0; k < 3; k++)
+					indexData[j * 3 + k] += vertexOffset;
+			}
+		}
 
 		std::vector<GLenum> attributeTypes;
 		attributeTypes.push_back(GL_FLOAT_VEC3);
@@ -76,6 +89,7 @@ void GLR::ResourceLoader::LoadMeshes(const char* file, std::vector<Mesh>& meshes
 			if (i == scene->mNumMeshes - 1)
 			{
 				m_currentMeshBuffer->Finish();
+				m_currentMeshBuffer.reset();
 				return;
 			}
 		}

@@ -54,7 +54,7 @@ void GLR::GLFWWindow::Initialize(unsigned width, unsigned height, const char* ti
 		throw std::runtime_error("Failed to create GLFW window.");
 
 	glfwMakeContextCurrent(m_window);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 	glfwSetKeyCallback(m_window, KeyCallback);
 
 	m_width = width;

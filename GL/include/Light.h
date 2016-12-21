@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 namespace GLR
 {
@@ -12,28 +13,35 @@ namespace GLR
 		Light(T* light)
 		{
 			m_lights.push_back(light);
+			m_this = light;
 		}
 
 		virtual ~Light()
 		{
-			std::erase(std::find(m_lights.begin(), m_lights.end(), m_this));
+			m_lights.erase(std::find(m_lights.begin(), m_lights.end(), m_this));
 		}
 
-		static void GetBuffer(std::shared_ptr<T>& lightData, unsigned& size)
+		static void GetBuffer(std::shared_ptr<char>& lightData, unsigned& size)
 		{
-			size = sizeof(T) * unsigned(m_lights.size());
-			lightData.reset(new T[m_lights.size()]);
+			size = sizeof(T);
+			lightData.reset(new char[size * m_lights.size()]);
 			for(unsigned i = 0; i < unsigned(m_lights.size()); i++)
-				memcpy(lightData.get()[i], m_lights[i], sizeof(T));
+				memcpy(&lightData.get()[i * size], m_lights[i], size);
+			size *= unsigned(m_lights.size());
 		}
 
 	private:
 		static std::vector<T*> m_lights;
 		T* m_this;
 	};
+
+	template<class T>
+	std::vector<T*> Light<T>::m_lights;
+
 	class DirectionalLight : public Light<DirectionalLight>
 	{
 	public:
+		DirectionalLight();
 		DirectionalLight(const glm::vec3& direction, const glm::vec4& color);
 
 		const glm::vec3& GetDirection() const;
@@ -47,6 +55,7 @@ namespace GLR
 	class PointLight : public Light<PointLight>
 	{
 	public:
+		PointLight();
 		PointLight(const glm::vec3& position, const glm::vec4& color, float exponent, float linear, float constant);
 
 		const glm::vec3& GetPosition() const;
@@ -66,6 +75,7 @@ namespace GLR
 	class SpotLight : public Light<SpotLight>
 	{
 	public:
+		SpotLight();
 		SpotLight(const glm::vec3& position, const glm::vec3& direction, const glm::vec4& color, float exponent, float linear, float constant, float innerConeAngle, float outerConeAngle);
 
 		const glm::vec3& GetPosition() const;

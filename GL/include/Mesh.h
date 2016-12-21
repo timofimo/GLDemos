@@ -20,6 +20,9 @@ namespace GLR
 		GLuint GetVertexArray() const;
 		const std::vector<GLenum>& GetAttributes() const;
 		std::shared_ptr<MeshBuffer> GetMeshBuffer() const;
+		unsigned GetIndexOffset() const;
+		unsigned GetIndexOffsetBytes() const;
+		unsigned GetIndexCount() const;
 
 	private:
 		std::shared_ptr<MeshBuffer> m_meshBuffer;

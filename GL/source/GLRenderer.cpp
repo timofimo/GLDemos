@@ -221,6 +221,13 @@ namespace GLR
 			std::unique_ptr<GLuint> boundTextures = nullptr;
 			GLuint boundFramebuffer = 0;
 		} rendererState;
+
+		struct DrawCommandBuffer
+		{
+			unsigned bufferID;
+			unsigned count;
+		};
+		std::vector<DrawCommandBuffer> m_drawCommandBuffers;
 	}
 }
 
@@ -237,10 +244,40 @@ void GLR::Clear(GLbitfield mask)
 	GL_GET_ERROR();
 }
 
-void GLR::DrawIndexed(unsigned count)
+void GLR::DrawIndexed(unsigned count, unsigned offset)
 {
-	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+	offset *= sizeof(unsigned);
+	uint64_t tempOffset = offset;
+	glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, reinterpret_cast<void*>(tempOffset));
 	GL_GET_ERROR();
+}
+
+void GLR::DrawIndexedIndirect(unsigned bufferIndex)
+{
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, Internal::m_drawCommandBuffers[bufferIndex].bufferID);
+
+	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, Internal::m_drawCommandBuffers[bufferIndex].count, 0);
+	GL_GET_ERROR();
+
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+}
+
+unsigned GLR::CreateDrawCommandsBuffer(const std::vector<DrawElementsIndirectCommand>& drawCommands)
+{
+	GLuint bufferID = 0;
+	glGenBuffers(1, &bufferID);
+	GL_GET_ERROR();
+
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bufferID);
+	GL_GET_ERROR();
+	glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(GLR::DrawElementsIndirectCommand) * unsigned(drawCommands.size()), drawCommands.data(), GL_STATIC_DRAW);
+	GL_GET_ERROR();
+
+	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+
+	Internal::m_drawCommandBuffers.push_back({ bufferID, unsigned(drawCommands.size()) });
+
+	return unsigned(Internal::m_drawCommandBuffers.size()) - 1;
 }
 
 void GLR::BindMesh(const Mesh& mesh)

@@ -39,3 +39,18 @@ std::shared_ptr<GLR::MeshBuffer> GLR::Mesh::GetMeshBuffer() const
 {
 	return m_meshBuffer;
 }
+
+unsigned GLR::Mesh::GetIndexOffset() const
+{
+	return m_bufferOffset;
+}
+
+unsigned GLR::Mesh::GetIndexOffsetBytes() const
+{
+	return m_bufferOffset * sizeof(unsigned);
+}
+
+unsigned GLR::Mesh::GetIndexCount() const
+{
+	return m_bufferSize;
+}
