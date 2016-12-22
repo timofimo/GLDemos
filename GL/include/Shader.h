@@ -182,6 +182,7 @@ namespace GLR
 		std::map<std::string, InputParameter> m_uniforms;
 		std::map<std::string, InputParameter> m_attributes;
 		std::map<std::string, UniformBlock> m_uniformBlocks;
-		static std::vector<std::string> m_globalUniformBlocks;
+		static std::map<std::string, UniformBlock> m_globalUniformBlocks;
+		static unsigned m_bindingOffset;
 	};
 }

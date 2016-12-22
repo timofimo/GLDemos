@@ -48,6 +48,7 @@ namespace GLR
 	void BindFramebuffer(const Framebuffer& framebuffer);
 	
 	void UnbindFramebuffer();
+	void UnbindShader();
 
 	void SetClearColor(float r, float g, float b, float a);
 	void SetViewport(int x, int y, int width, int height);

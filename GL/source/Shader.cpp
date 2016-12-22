@@ -3,7 +3,8 @@
 #include "Utilities.h"
 #include <algorithm>
 
-std::vector<std::string> GLR::Shader::m_globalUniformBlocks;
+std::map<std::string, GLR::UniformBlock> GLR::Shader::m_globalUniformBlocks;
+unsigned GLR::Shader::m_bindingOffset = 0;
 
 GLR::Shader::Shader(const std::string& name, const char* computeShader) : Shader(name, {computeShader}, {GL_COMPUTE_SHADER})
 {
@@ -104,8 +105,7 @@ GLR::Shader::~Shader()
 
 void GLR::Shader::AddGlobalUniformBlock(const std::string& uniformBlockName)
 {
-	m_globalUniformBlocks.push_back(uniformBlockName);
-	std::sort(m_globalUniformBlocks.begin(), m_globalUniformBlocks.end());
+	m_globalUniformBlocks[uniformBlockName] = UniformBlock();
 }
 
 void GLR::Shader::CheckCompatibilityMesh(const Mesh* mesh)
@@ -304,7 +304,6 @@ void GLR::Shader::LoadUniformBlocks()
 	std::vector<GLchar> uniformBlockNameData(maxUniformBlockNameLength);
 
 	// Loop over all uniform blocks
-	unsigned bindingCount = 0;
 	for (int i = 0; i < numactiveUniformBlocks; i++)
 	{
 		// Get the name length of the uniform block
@@ -317,24 +316,23 @@ void GLR::Shader::LoadUniformBlocks()
 		std::string name(&blockName[0]);
 
 		// Look for the uniform block in the global list
-		bool isGlobal = std::binary_search(m_globalUniformBlocks.begin(), m_globalUniformBlocks.end(), name);
+		std::map<std::string, UniformBlock>::iterator it = m_globalUniformBlocks.find(name);
+		bool isGlobal = it != m_globalUniformBlocks.end();
 
-		// Look for the global uniform block in the list of uniform blocks
-		std::map<std::string, UniformBlock>::iterator it = m_uniformBlocks.end();
-		if(isGlobal)
-			it = m_uniformBlocks.find(name);
+		// Get the size of the uniform block
+		GLint bufferSize;
+		glGetActiveUniformBlockiv(m_programID, i, GL_UNIFORM_BLOCK_DATA_SIZE, &bufferSize);
 
-		if(it != m_uniformBlocks.end())
+		if(isGlobal && it->second.bufferID != -1)
 		{
 			// If the global block already exists, bind it to the buffer
 			glUniformBlockBinding(m_programID, i, it->second.binding);
+
+			// Create and store the shader block by name
+			m_uniformBlocks[name] = UniformBlock(name, it->second.bufferID, it->second.binding, bufferSize);
 		}
 		else
 		{
-			// Get the size of the uniform block
-			GLint bufferSize;
-			glGetActiveUniformBlockiv(m_programID, i, GL_UNIFORM_BLOCK_DATA_SIZE, &bufferSize);
-
 			// Create the buffer
 			GLuint buffer;
 			glGenBuffers(1, &buffer);
@@ -343,13 +341,22 @@ void GLR::Shader::LoadUniformBlocks()
 			glBufferData(GL_UNIFORM_BUFFER, bufferSize, nullMemory.get(), GL_STREAM_DRAW);
 
 			// Bind this programs uniform block to this buffer
-			glBindBufferBase(GL_UNIFORM_BUFFER, bindingCount, buffer);
+			glBindBufferBase(GL_UNIFORM_BUFFER, m_bindingOffset, buffer);
 
 			// Unbind the buffer
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+			// Bind the block to the buffer
+			glUniformBlockBinding(m_programID, i, m_bindingOffset);
+
 			// Create and store the shader block by name
-			m_uniformBlocks[name] = UniformBlock(name, buffer, bindingCount++, bufferSize);
+			m_uniformBlocks[name] = UniformBlock(name, buffer, m_bindingOffset, bufferSize);
+
+			// Set global buffer index if the buffer is global
+			if (isGlobal)
+				m_globalUniformBlocks[name] = m_uniformBlocks[name];
+
+			++m_bindingOffset;
 		}
 	}
 

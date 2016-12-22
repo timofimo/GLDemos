@@ -50,7 +50,7 @@ public:
 	}
 	void Rotate(const glm::vec3& rotation)
 	{
-		m_localOrientation *= glm::quat(rotation);
+		m_localOrientation = glm::quat(glm::vec3(0.0f, rotation.y, 0.0f)) * m_localOrientation * glm::quat(glm::vec3(rotation.x, 0.0f, 0.0f));
 		SetChanged();
 	}
 	void Rotate(const glm::quat& rotation)

@@ -1,11 +1,13 @@
 #version 450 core
 
 in vec2 outTexcoord;
+in vec3 outNormal;
+
 out vec3 color;
 
-uniform sampler2D textureSampler;
+uniform vec3 meshColor;
 
 void main()
 {
-	color = texture(textureSampler, outTexcoord).rgb;
+	color = meshColor * (outNormal + 1.0) * 0.5;
 }

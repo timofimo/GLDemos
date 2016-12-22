@@ -10,39 +10,43 @@ namespace GLR
 	class Light
 	{
 	public:
-		Light(T* light)
+		static void Add(T* light)
 		{
 			m_lights.push_back(light);
-			m_this = light;
 		}
 
-		virtual ~Light()
+		static void Remove(T* light)
 		{
-			m_lights.erase(std::find(m_lights.begin(), m_lights.end(), m_this));
+			m_lights.erase(std::find(m_lights.begin(), m_lights.end(), light));
 		}
 
 		static void GetBuffer(std::shared_ptr<char>& lightData, unsigned& size)
 		{
-			size = sizeof(T);
+			size = sizeof(T) + (16 - (sizeof(T) % 16));
 			lightData.reset(new char[size * m_lights.size()]);
 			for(unsigned i = 0; i < unsigned(m_lights.size()); i++)
-				memcpy(&lightData.get()[i * size], m_lights[i], size);
+				memcpy(&lightData.get()[i * size], m_lights[i], sizeof(T));
 			size *= unsigned(m_lights.size());
+		}
+
+		static unsigned GetCount()
+		{
+			return unsigned(m_lights.size());
 		}
 
 	private:
 		static std::vector<T*> m_lights;
-		T* m_this;
 	};
 
 	template<class T>
 	std::vector<T*> Light<T>::m_lights;
 
-	class DirectionalLight : public Light<DirectionalLight>
+	class DirectionalLight
 	{
 	public:
 		DirectionalLight();
 		DirectionalLight(const glm::vec3& direction, const glm::vec4& color);
+		~DirectionalLight();
 
 		const glm::vec3& GetDirection() const;
 		const glm::vec4& GetColor() const;
@@ -52,11 +56,12 @@ namespace GLR
 		glm::vec4 m_color;
 	};
 
-	class PointLight : public Light<PointLight>
+	class PointLight
 	{
 	public:
 		PointLight();
 		PointLight(const glm::vec3& position, const glm::vec4& color, float exponent, float linear, float constant);
+		~PointLight();
 
 		const glm::vec3& GetPosition() const;
 		const glm::vec4& GetColor() const;
@@ -72,11 +77,12 @@ namespace GLR
 		float m_exponent, m_linear, m_constant;
 	};
 
-	class SpotLight : public Light<SpotLight>
+	class SpotLight
 	{
 	public:
 		SpotLight();
 		SpotLight(const glm::vec3& position, const glm::vec3& direction, const glm::vec4& color, float exponent, float linear, float constant, float innerConeAngle, float outerConeAngle);
+		~SpotLight();
 
 		const glm::vec3& GetPosition() const;
 		const glm::vec3& GetDirection() const;

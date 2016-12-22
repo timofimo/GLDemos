@@ -367,6 +367,15 @@ void GLR::UnbindFramebuffer()
 	}
 }
 
+void GLR::UnbindShader()
+{
+	if(Internal::rendererState.boundShaderProgram != 0)
+	{
+		glUseProgram(0);
+		Internal::rendererState.boundShaderProgram = 0;
+	}
+}
+
 void GLR::SetClearColor(float r, float g, float b, float a)
 {
 	glClearColor(r, g, b, a);
