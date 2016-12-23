@@ -19,6 +19,6 @@ namespace GLR
 		void Build(std::vector<BBox>& shapes);
 
 		unsigned m_nNodes, m_leafSize, m_nLeafs;
-		BVHFlatNode* m_flatTree;
+		std::vector<BVHFlatNode> m_flatTree;
 	};
 }

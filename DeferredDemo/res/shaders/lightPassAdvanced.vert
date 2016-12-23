@@ -8,10 +8,6 @@ struct PointLight
 	float range;
 	vec3 color;
 	float intensity;
-	float exponent;
-	float linear;
-	float constant;
-	float padding;
 };
 
 uniform PointLightBlock

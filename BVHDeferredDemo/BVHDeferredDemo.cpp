@@ -8,6 +8,7 @@
 #include "Light.h"
 #include "PhysicsShapes.h"
 #include "BVH.h"
+#include <glm/gtc/random.hpp>
 
 // Quad
 const float vertexData[] = 
@@ -47,10 +48,10 @@ public:
 
 		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
 
-		m_pointLights.reserve(1024);
-		for (unsigned i = 0; i < 1024; i++)
+		m_pointLights.reserve(2048);
+		for (unsigned i = 0; i < 2048; i++)
 		{
-			m_pointLights.emplace_back(glm::vec3(((rand() % 360) - 180) * 0.08f, (rand() % 140) * 0.08f, ((rand() % 220) - 110) * 0.08f), glm::vec4((rand() % 255) * 0.004f, (rand() % 255) * 0.004f, (rand() % 255) * 0.004f, 0.01f), 1.0f, 0.0f, 0.0f);
+			m_pointLights.emplace_back(glm::linearRand(glm::vec3(-18.0f, 0.0f, -22.0f), glm::vec3(18.0f, 14.0f, 22.0f)), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
 		}
 
 		std::vector<GLR::DrawElementsIndirectCommand> drawCommands;
@@ -107,7 +108,7 @@ public:
 		std::vector<unsigned> result = bvh.Intersect(glm::vec3(glm::sin(glfwGetTime()) * 3.0f, 0.0f, glm::cos(glfwGetTime()) * 3.0f));
 		double test = glfwGetTime() - start;
 
-		//printf_s("List construction: %fms   BVH construction: %f   Intersection test: %f   Total: %f\n", listDelta * 1000.0, BVH * 1000.0, test * 1000.0, (listDelta + BVH + test) * 1000.0);
+		printf_s("List construction: %fms   BVH construction: %f   Intersection test: %f   Total: %f\n", listDelta * 1000.0, BVH * 1000.0, test * 1000.0, (listDelta + BVH + test) * 1000.0);
 
 		// Geometry pass
 		GLR::BindShader(*m_shaders[1]);
@@ -138,14 +139,6 @@ public:
 			GLR::DrawIndexedIndirect(m_commandBuffers[3]);
 		}
 
-		GLR::BindMesh(m_meshes[1]);
-		for (unsigned j = 0; j < unsigned(result.size()); j++)
-		{
-			GLR::BBox box = bvh.Get(result[j]);
-			modelMatrix->Set(glm::translate(box.Center()) * glm::scale(box.Max() - box.Center()));
-			GLR::DrawLinesIndexed(m_meshes[1].GetIndexCount(), m_meshes[1].GetIndexOffset());
-		}
-
 		GLR::UnbindShader();
 
 		// Light pass
@@ -163,17 +156,17 @@ public:
 		unsigned pointLightBufferSize;
 		GLR::Light<GLR::PointLight>::GetBuffer(pointLightBuffer, pointLightBufferSize);
 
-		/*unsigned plSize = sizeof(GLR::PointLight) + (16 - (sizeof(GLR::PointLight) % 16));
+		unsigned plSize = sizeof(GLR::PointLight) + ((16 - (sizeof(GLR::PointLight) % 16)) % 16);
 		for (unsigned i = 0; i < (pointLightBufferSize / plSize); i++)
 		{
 			GLR::PointLight* pl = reinterpret_cast<GLR::PointLight*>(&pointLightBuffer.get()[i * plSize]);
 			pl->SetPosition(pl->GetPosition() + glm::vec3(glm::sin(glfwGetTime()) * glm::sign(int(i % 6) - 3), 0.0f, glm::cos(glfwGetTime()) * glm::sign(int(i % 12) - 4)) * 4.0f);
-		}*/
+		}
 
 		GLR::SetRasterizationState(true, GL_FRONT, GL_CCW);
 		GLR::BindMesh(m_meshes[2]);
 
-		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + (16 - (unsigned(sizeof(GLR::PointLight)) % 16))) * 1024;
+		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + ((16 - (unsigned(sizeof(GLR::PointLight)) % 16)) % 16)) * 1024;
 		for (unsigned i = 0; i < unsigned(ceil(float(pointLightBufferSize) / float(maxBufferSize))); i++)
 		{
 			m_shaders[2]->GetUniformBlock("PointLightBlock")->UpdateContents(&pointLightBuffer.get()[i * maxBufferSize], glm::min(maxBufferSize, pointLightBufferSize - maxBufferSize * i), 0);
@@ -183,17 +176,6 @@ public:
 		GLR::SetRasterizationState(true, GL_BACK, GL_CCW);
 		GLR::SetDepthState(true, true, GL_LESS);
 		GLR::SetBlendState(false, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		GLR::UnbindShader();
-
-		GLR::BindShader(*m_shaders[1]);
-		meshColor->Set(glm::vec3(1.0f, 1.0f, 1.0f));
-		GLR::BindMesh(m_meshes[1]);
-		for (unsigned j = 0; j < unsigned(result.size()); j++)
-		{
-			GLR::BBox box = bvh.Get(result[j]);
-			modelMatrix->Set(glm::translate(box.Center()) * glm::scale(box.Max() - box.Center()));
-			GLR::DrawLinesIndexed(m_meshes[1].GetIndexCount(), m_meshes[1].GetIndexOffset());
-		}
 		GLR::UnbindShader();
 	}
 

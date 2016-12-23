@@ -20,10 +20,6 @@ struct PointLight
 	float range;
 	vec3 color;
 	float intensity;
-	float exponent;
-	float linear;
-	float constant;
-	float padding;
 };
 
 uniform PointLightBlock
@@ -64,7 +60,7 @@ vec4 CalcLight(vec3 color, float intensity, vec3 direction, vec3 worldPos, vec3 
 	return diffuseColor + specularColor;
 }
 
-vec4 CalcPointLight(vec3 position, vec3 color, float intensity, float range, float exponent, float linear, float constant, vec3 worldPos, vec3 normal)
+vec4 CalcPointLight(vec3 position, vec3 color, float intensity, float range, vec3 worldPos, vec3 normal)
 {
 	vec3 lightDirection = worldPos - position;
 	float distanceToPoint = length(lightDirection);
@@ -78,9 +74,9 @@ vec4 CalcPointLight(vec3 position, vec3 color, float intensity, float range, flo
 	
 	vec4 result = CalcLight(color, intensity, lightDirection, worldPos, normal);
 	
-	float attenuation = constant + linear * distanceToPoint + exponent * distanceToPoint * distanceToPoint + 0.0001;
+	float attenuation = pow(max(1.0 - pow(distanceToPoint, 2.0) / pow(range, 2.0), 0), 2.0);
 	
-	return result / attenuation;
+	return result * attenuation;
 }
 
 void main()
@@ -95,8 +91,7 @@ void main()
 	vec4 lightColor = vec4(0);
 	for(int i = 0; i < numPointLights; i++)
 	{
-		lightColor += CalcPointLight(pl.pointLights[i].position, pl.pointLights[i].color, pl.pointLights[i].intensity, pl.pointLights[i].range, 
-									pl.pointLights[i].exponent, pl.pointLights[i].linear, pl.pointLights[i].constant, worldPos.xyz, normal);
+		lightColor += CalcPointLight(pl.pointLights[i].position, pl.pointLights[i].color, pl.pointLights[i].intensity, pl.pointLights[i].range, worldPos.xyz, normal);
 	}
 	
 	outColor = color * lightColor;

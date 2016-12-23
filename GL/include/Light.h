@@ -22,7 +22,7 @@ namespace GLR
 
 		static void GetBuffer(std::shared_ptr<char>& lightData, unsigned& size)
 		{
-			size = sizeof(T) + (16 - (sizeof(T) % 16));
+			size = sizeof(T) + ((16 - (sizeof(T) % 16)) % 16);
 			lightData.reset(new char[size * m_lights.size()]);
 			for(unsigned i = 0; i < unsigned(m_lights.size()); i++)
 				memcpy(&lightData.get()[i * size], m_lights[i], sizeof(T));
@@ -60,7 +60,7 @@ namespace GLR
 	{
 	public:
 		PointLight();
-		PointLight(const glm::vec3& position, const glm::vec4& color, float exponent, float linear, float constant);
+		PointLight(const glm::vec3& position, const glm::vec4& color, float range);
 		~PointLight();
 
 		void SetPosition(const glm::vec3& position);
@@ -68,31 +68,24 @@ namespace GLR
 		const glm::vec3& GetPosition() const;
 		const glm::vec4& GetColor() const;
 		float GetRange() const;
-		float GetAttenuationExponent() const;
-		float GetAttenuationLinear() const;
-		float GetAttenuationConstant() const;
 
 	private:
 		glm::vec3 m_position;
 		float m_range;
 		glm::vec4 m_color;
-		float m_exponent, m_linear, m_constant;
 	};
 
 	class SpotLight
 	{
 	public:
 		SpotLight();
-		SpotLight(const glm::vec3& position, const glm::vec3& direction, const glm::vec4& color, float exponent, float linear, float constant, float innerConeAngle, float outerConeAngle);
+		SpotLight(const glm::vec3& position, const glm::vec3& direction, const glm::vec4& color, float range, float innerConeAngle, float outerConeAngle);
 		~SpotLight();
 
 		const glm::vec3& GetPosition() const;
 		const glm::vec3& GetDirection() const;
 		const glm::vec4& GetColor() const;
 		float GetRange() const;
-		float GetAttenuationExponent() const;
-		float GetAttenuationLinear() const;
-		float GetAttenuationConstant() const;
 		float GetInnerConeAngle() const;
 		float GetOuterConeAngle() const;
 
@@ -101,7 +94,6 @@ namespace GLR
 		glm::vec3 m_direction;
 		float m_range;
 		glm::vec4 m_color;
-		float m_exponent, m_linear, m_constant;
 		float m_innerCutoff, m_outerCutoff;
 	};
 }

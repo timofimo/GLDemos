@@ -6,6 +6,7 @@
 #include "ExampleBase/Camera.h"
 #include "Framebuffer.h"
 #include "Light.h"
+#include <glm/gtc/random.hpp>
 
 #define DRAW_INDIRECT
 #define ADVANCED_CULLING
@@ -56,7 +57,7 @@ public:
 		m_pointLights.reserve(2048);
 		for (unsigned i = 0; i < 2048; i++)
 		{
-			m_pointLights.emplace_back(glm::vec3(((rand() % 360) - 180) * 0.08f, (rand() % 140) * 0.08f, ((rand() % 220) - 110) * 0.08f), glm::vec4((rand() % 255) * 0.004f, (rand() % 255) * 0.004f, (rand() % 255) * 0.004f, 0.1f), 1.0f, 0.0f, 0.0f);
+			m_pointLights.emplace_back(glm::linearRand(glm::vec3(-18.0f, 0.0f, -22.0f), glm::vec3(18.0f, 14.0f, 22.0f)), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
 		}
 
 		std::vector<GLR::DrawElementsIndirectCommand> drawCommands;
@@ -159,7 +160,7 @@ public:
 		unsigned pointLightBufferSize;
 		GLR::Light<GLR::PointLight>::GetBuffer(pointLightBuffer, pointLightBufferSize);
 #ifdef ANIMATED_LIGHTS
-		unsigned plSize = sizeof(GLR::PointLight) + (16 - (sizeof(GLR::PointLight) % 16));
+		unsigned plSize = sizeof(GLR::PointLight) + ((16 - (sizeof(GLR::PointLight) % 16)) % 16);
 		for (unsigned i = 0; i < (pointLightBufferSize / plSize); i++)
 		{
 			GLR::PointLight* pl = reinterpret_cast<GLR::PointLight*>(&pointLightBuffer.get()[i * plSize]);
@@ -188,7 +189,7 @@ public:
 		GLR::SetRasterizationState(true, GL_FRONT, GL_CCW);
 		GLR::BindMesh(m_meshes[2]);
 
-		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + (16 - (unsigned(sizeof(GLR::PointLight)) % 16))) * 1024;
+		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + ((16 - (sizeof(GLR::PointLight) % 16)) % 16)) * 1024;
 		for (unsigned i = 0; i < unsigned(ceil(float(pointLightBufferSize) / float(maxBufferSize))); i++)
 		{
 			m_shaders[2]->GetUniformBlock("PointLightBlock")->UpdateContents(&pointLightBuffer.get()[i * maxBufferSize], glm::min(maxBufferSize, pointLightBufferSize - maxBufferSize * i), 0);

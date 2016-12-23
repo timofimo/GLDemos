@@ -19,21 +19,20 @@ struct BVHTraversal
 	BVHTraversal(int _i) : i(_i) { }
 };
 
-GLR::BVH::BVH(std::vector<BBox>& shapes, unsigned leafSize) : m_nNodes(0), m_leafSize(leafSize), m_nLeafs(0), m_flatTree(nullptr)
+GLR::BVH::BVH(std::vector<BBox>& shapes, unsigned leafSize) : m_nNodes(0), m_leafSize(leafSize), m_nLeafs(0)
 {
 	Build(shapes);
 }
 
 GLR::BVH::~BVH()
 {
-	delete[] m_flatTree;
 }
 
 std::vector<unsigned> GLR::BVH::Intersect(const glm::vec3& point) const
 {
 	std::vector<unsigned> result;
 
-	if (!m_flatTree)
+	if (m_flatTree.empty())
 		return result;
 
 	BVHTraversal todo[64];
@@ -69,7 +68,7 @@ std::vector<unsigned> GLR::BVH::Intersect(const glm::vec3& point) const
 
 GLR::BBox GLR::BVH::Get(unsigned index) const
 {
-	if (!m_flatTree)
+	if (m_flatTree.empty())
 		return BVHFlatNode().bbox;
 
 	return m_flatTree[index].bbox;
@@ -89,8 +88,8 @@ void GLR::BVH::Build(std::vector<BBox>& shapes)
 	++stackptr;
 
 	BVHFlatNode node;
-	std::vector<BVHFlatNode> buildNodes;
-	buildNodes.reserve(shapes.size() * 2);
+	m_flatTree.resize(shapes.size() * 2);
+	unsigned currentBuildNodeIndex = 0;
 
 	while(stackptr > 0)
 	{
@@ -119,14 +118,14 @@ void GLR::BVH::Build(std::vector<BBox>& shapes)
 			++m_nLeafs;
 		}
 
-		buildNodes.push_back(node);
+		m_flatTree[currentBuildNodeIndex++] = node;
 
 		if(bnode.parent != rootIdentifier)
 		{
-			--buildNodes[bnode.parent].rightOffset;
+			--m_flatTree[bnode.parent].rightOffset;
 
-			if (buildNodes[bnode.parent].rightOffset == touchedTwice)
-				buildNodes[bnode.parent].rightOffset = m_nNodes - 1 - bnode.parent;
+			if (m_flatTree[bnode.parent].rightOffset == touchedTwice)
+				m_flatTree[bnode.parent].rightOffset = m_nNodes - 1 - bnode.parent;
 		}
 
 		if(node.rightOffset == 0)
@@ -159,8 +158,4 @@ void GLR::BVH::Build(std::vector<BBox>& shapes)
 		todo[stackptr].parent = m_nNodes - 1;
 		++stackptr;
 	}
-
-	m_flatTree = new BVHFlatNode[m_nNodes];
-	for (unsigned i = 0; i < m_nNodes; i++)
-		m_flatTree[i] = buildNodes[i];
 }
