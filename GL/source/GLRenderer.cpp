@@ -218,9 +218,13 @@ namespace GLR
 			// Bindings
 			GLuint boundShaderProgram = 0;
 			GLuint boundVertexArray = 0;
-			GLint numTextureUnits = 0;
 			std::unique_ptr<GLuint> boundTextures = nullptr;
 			GLuint boundFramebuffer = 0;
+
+			// System limits
+			GLint numTextureUnits = 0;
+			GLint maxUniformBlockSize = 0;
+			GLint maxShaderStorageBlockSize = 0;
 		} rendererState;
 
 		struct DrawCommandBuffer
@@ -241,6 +245,12 @@ namespace GLR
 
 				glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 			}
+			DrawCommandBuffer(DrawCommandBuffer&& other)
+			{
+				bufferID = std::move(other.bufferID);
+				count = std::move(other.count);
+				other.bufferID = 0;
+			}
 			~DrawCommandBuffer()
 			{
 				if(bufferID != 0)
@@ -248,6 +258,13 @@ namespace GLR
 					glDeleteBuffers(1, &bufferID);
 					bufferID = 0;
 				}
+			}
+
+			void operator=(DrawCommandBuffer&& rhs)
+			{
+				bufferID = std::move(rhs.bufferID);
+				count = std::move(rhs.count);
+				rhs.bufferID = 0;
 			}
 		};
 		std::vector<DrawCommandBuffer> m_drawCommandBuffers;
@@ -260,6 +277,12 @@ void GLR::Initialize()
 	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &Internal::rendererState.numTextureUnits);
 	Internal::rendererState.boundTextures.reset(new GLuint[Internal::rendererState.numTextureUnits]);
 	memset(Internal::rendererState.boundTextures.get(), 0, sizeof(GLuint) * Internal::rendererState.numTextureUnits);
+
+	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &Internal::rendererState.maxUniformBlockSize);
+	printf_s("%i\n", Internal::rendererState.maxUniformBlockSize);
+
+	glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &Internal::rendererState.maxShaderStorageBlockSize);
+	printf_s("%i\n", Internal::rendererState.maxShaderStorageBlockSize);
 }
 
 void GLR::Clear(GLbitfield mask)
@@ -278,7 +301,9 @@ void GLR::DrawIndexed(unsigned count, unsigned offset)
 
 void GLR::DrawIndexedIndirect(unsigned bufferIndex)
 {
+	GL_GET_ERROR();
 	glBindBuffer(GL_DRAW_INDIRECT_BUFFER, Internal::m_drawCommandBuffers[bufferIndex].bufferID);
+	GL_GET_ERROR();
 
 	glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr, Internal::m_drawCommandBuffers[bufferIndex].count, 0);
 	GL_GET_ERROR();

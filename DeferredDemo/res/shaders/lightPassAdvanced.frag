@@ -1,11 +1,11 @@
 #version 450 core
 
-in vec2 vTexcoord;
+in vec4 vPosition;
+flat in uint vDrawIndex;
 
 uniform sampler2D colorSampler;
 uniform sampler2D normalSampler;
 uniform sampler2D depthSampler;
-uniform uint numPointLights;
 
 uniform CameraBlock
 {
@@ -60,6 +60,8 @@ vec4 CalcLight(vec3 color, float intensity, vec3 direction, vec3 worldPos, vec3 
 			specularColor = vec4(color, 1) * 0.5 * specularFactor * diffuseFactor;
 		}
 	}
+	else
+		discard;
 	
 	return diffuseColor + specularColor;
 }
@@ -70,9 +72,7 @@ vec4 CalcPointLight(vec3 position, vec3 color, float intensity, float range, flo
 	float distanceToPoint = length(lightDirection);
 	
 	if(distanceToPoint > range)
-	{
-		return vec4(0);
-	}
+		discard;
 	
 	lightDirection /= distanceToPoint;
 	
@@ -85,19 +85,16 @@ vec4 CalcPointLight(vec3 position, vec3 color, float intensity, float range, flo
 
 void main()
 {
-	vec4 color = texture(colorSampler, vTexcoord);
-	vec3 normal = normalize(texture(normalSampler, vTexcoord).xyz * 2.0 - 1.0);
-	float depth = texture(depthSampler, vTexcoord).r;
+	vec2 texcoord = (vPosition.xy / vPosition.w + 1) * 0.5;
+	vec4 color = texture(colorSampler, texcoord);
+	vec3 normal = normalize(texture(normalSampler, texcoord).xyz * 2.0 - 1.0);
+	float depth = texture(depthSampler, texcoord).r;
 	
-	vec4 worldPos = camera.invViewProjectionMatrix * vec4(vTexcoord.x * 2.0 - 1.0, vTexcoord.y * 2.0 - 1.0, depth * 2.0 - 1.0, 1);
+	vec4 worldPos = camera.invViewProjectionMatrix * vec4(texcoord.x * 2.0 - 1.0, texcoord.y * 2.0 - 1.0, depth * 2.0 - 1.0, 1);
 	worldPos.xyz /= worldPos.w;
 	
-	vec4 lightColor = vec4(0);
-	for(int i = 0; i < numPointLights; i++)
-	{
-		lightColor += CalcPointLight(pl.pointLights[i].position, pl.pointLights[i].color, pl.pointLights[i].intensity, pl.pointLights[i].range, 
-									pl.pointLights[i].exponent, pl.pointLights[i].linear, pl.pointLights[i].constant, worldPos.xyz, normal);
-	}
-	
+	vec4 lightColor = CalcPointLight(pl.pointLights[vDrawIndex].position, pl.pointLights[vDrawIndex].color, pl.pointLights[vDrawIndex].intensity, pl.pointLights[vDrawIndex].range, 
+									pl.pointLights[vDrawIndex].exponent, pl.pointLights[vDrawIndex].linear, pl.pointLights[vDrawIndex].constant, worldPos.xyz, normal);
+									
 	outColor = color * lightColor;
 }

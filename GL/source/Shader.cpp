@@ -4,7 +4,9 @@
 #include <algorithm>
 
 std::map<std::string, GLR::UniformBlock> GLR::Shader::m_globalUniformBlocks;
-unsigned GLR::Shader::m_bindingOffset = 0;
+unsigned GLR::Shader::m_uniformBindingOffset = 0;
+std::map<std::string, GLR::ShaderStorageBlock> GLR::Shader::m_globalShaderStorageBlocks;
+unsigned GLR::Shader::m_shaderStorageBindingOffset = 0;
 
 GLR::Shader::Shader(const std::string& name, const char* computeShader) : Shader(name, {computeShader}, {GL_COMPUTE_SHADER})
 {
@@ -92,6 +94,7 @@ GLR::Shader::Shader(const std::string& name, const std::vector<const char*>& sha
 	LoadAttributes();
 	LoadUniforms();
 	LoadUniformBlocks();
+	LoadShaderStorageBlocks();
 }
 
 GLR::Shader::~Shader()
@@ -144,6 +147,15 @@ const GLR::UniformBlock* GLR::Shader::GetUniformBlock(const std::string& name) c
 		return &it->second;
 
 	LOG_E("Uniform block not found");
+}
+
+GLR::ShaderStorageBlock* GLR::Shader::GetShaderStorageBlock(const std::string& name)
+{
+	auto it = m_shaderStorageBlocks.find(name);
+	if (it != m_shaderStorageBlocks.end())
+		return &it->second;
+
+	LOG_E("Shader storage block not found");
 }
 
 void GLR::Shader::CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource)
@@ -251,6 +263,9 @@ void GLR::Shader::LoadUniforms()
 		std::string name(&uniformNameData[0], actualNameLength);
 		GLint location = glGetUniformLocation(m_programID, name.c_str());
 
+		if(name.find('.') != name.npos)
+			continue;
+
 		// Create and store the uniforms by name
 		if(type >= GL_SAMPLER_1D && type <= GL_SAMPLER_2D_SHADOW)
 			m_uniforms[name] = InputParameter(name, location, type, samplerCount++);
@@ -341,22 +356,85 @@ void GLR::Shader::LoadUniformBlocks()
 			glBufferData(GL_UNIFORM_BUFFER, bufferSize, nullMemory.get(), GL_STREAM_DRAW);
 
 			// Bind this programs uniform block to this buffer
-			glBindBufferBase(GL_UNIFORM_BUFFER, m_bindingOffset, buffer);
+			glBindBufferBase(GL_UNIFORM_BUFFER, m_uniformBindingOffset, buffer);
 
 			// Unbind the buffer
 			glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 			// Bind the block to the buffer
-			glUniformBlockBinding(m_programID, i, m_bindingOffset);
+			glUniformBlockBinding(m_programID, i, m_uniformBindingOffset);
 
 			// Create and store the shader block by name
-			m_uniformBlocks[name] = UniformBlock(name, buffer, m_bindingOffset, bufferSize);
+			m_uniformBlocks[name] = UniformBlock(name, buffer, m_uniformBindingOffset, bufferSize);
 
 			// Set global buffer index if the buffer is global
 			if (isGlobal)
 				m_globalUniformBlocks[name] = m_uniformBlocks[name];
 
-			++m_bindingOffset;
+			++m_uniformBindingOffset;
+		}
+	}
+
+	GL_GET_ERROR();
+}
+
+void GLR::Shader::LoadShaderStorageBlocks()
+{
+	// Get the number of SSBO's
+	GLint numActiveShaderStorageBlocks = 0;
+	glGetProgramInterfaceiv(m_programID, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numActiveShaderStorageBlocks);
+
+	// Get the maximum name length of the SSBO's
+	GLint maxShaderStorageBlockNameLength = 0;
+	glGetProgramInterfaceiv(m_programID, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxShaderStorageBlockNameLength);
+	std::vector<GLchar> uniformBlockNameData(maxShaderStorageBlockNameLength);
+
+	// Loop over all uniform blocks
+	for (int i = 0; i < numActiveShaderStorageBlocks; i++)
+	{
+		// Get the name length of the SSBO
+		GLint nameLength;
+		GLenum props[] = { GL_NAME_LENGTH };
+		glGetProgramResourceiv(m_programID, GL_SHADER_STORAGE_BLOCK, i, 1, props, sizeof(GLint), nullptr, &nameLength);
+
+		// Get the name of the uniform block
+		std::vector<GLchar> blockName(nameLength);
+		glGetProgramResourceName(m_programID, GL_SHADER_STORAGE_BLOCK, i, sizeof(GLchar) * nameLength, nullptr, blockName.data());
+		std::string name(&blockName[0]);
+
+		// Look for the SSBO in the global list
+		std::map<std::string, ShaderStorageBlock>::iterator it = m_globalShaderStorageBlocks.find(name);
+		bool isGlobal = it != m_globalShaderStorageBlocks.end();
+
+		if (isGlobal && it->second.bufferID != -1)
+		{
+			// If the global block already exists, bind it to the buffer
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, it->second.binding, it->second.bufferID);
+
+			// Create and store the shader block by name
+			m_shaderStorageBlocks[name] = ShaderStorageBlock(name, it->second.bufferID, it->second.binding);
+		}
+		else
+		{
+			// Create the buffer
+			GLuint buffer;
+			glGenBuffers(1, &buffer);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+
+			// Bind this programs uniform block to this buffer
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, m_shaderStorageBindingOffset, buffer);
+
+			// Unbind the buffer
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+			// Create and store the shader block by name
+			m_shaderStorageBlocks[name] = ShaderStorageBlock(name, buffer, m_shaderStorageBindingOffset);
+
+			// Set global buffer index if the buffer is global
+			if (isGlobal)
+				m_globalShaderStorageBlocks[name] = m_shaderStorageBlocks[name];
+
+			++m_shaderStorageBindingOffset;
 		}
 	}
 

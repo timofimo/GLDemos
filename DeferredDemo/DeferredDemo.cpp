@@ -7,6 +7,10 @@
 #include "Framebuffer.h"
 #include "Light.h"
 
+#define DRAW_INDIRECT
+#define ADVANCED_CULLING
+#define ANIMATED_LIGHTS
+
 // Quad
 const float vertexData[] = 
 {
@@ -29,13 +33,16 @@ public:
 		: ExampleBase(width, height, title, borderless), m_camera(glm::radians(60.0f), float(width) / float(height), 0.1f, 2000.0f)
 	{
 		m_meshes.push_back(GLR::Mesh("Quad", vertexData, 12, indexData, 6, std::vector<GLenum>{ GL_FLOAT_VEC3}));
-		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/DeferredDemo/res/meshes/cube.fbx", m_meshes, GLR::EBatchType::PerFile);
+		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/primitives.fbx", m_meshes, GLR::EBatchType::PerFile);
 		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/sponza/sponza.fbx", m_meshes, GLR::EBatchType::PerFile);
 
 		GLR::Shader::AddGlobalUniformBlock("CameraBlock");
-		m_shaders[0] = std::make_unique<GLR::Shader>("SimpleShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/deferredDemo.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/deferredDemo.frag");
 		m_shaders[1] = std::make_unique<GLR::Shader>("geometryShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/geometryPass.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/geometryPass.frag");
+#ifndef ADVANCED_CULLING
 		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPass.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPass.frag");
+#else
+		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPassAdvanced.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPassAdvanced.frag");
+#endif
 
 		GLR::SetClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		GLR::SetViewport(0, 0, width, height);
@@ -46,9 +53,23 @@ public:
 
 		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
 
-		for (unsigned j = 0; j < 1; j++)
+		m_pointLights.reserve(2048);
+		for (unsigned i = 0; i < 2048; i++)
 		{
-			std::vector<GLR::DrawElementsIndirectCommand> drawCommands;
+			m_pointLights.emplace_back(glm::vec3(((rand() % 360) - 180) * 0.08f, (rand() % 140) * 0.08f, ((rand() % 220) - 110) * 0.08f), glm::vec4((rand() % 255) * 0.004f, (rand() % 255) * 0.004f, (rand() % 255) * 0.004f, 0.1f), 1.0f, 0.0f, 0.0f);
+		}
+
+		std::vector<GLR::DrawElementsIndirectCommand> drawCommands;
+#ifdef ADVANCED_CULLING
+		drawCommands.reserve(m_pointLights.size());
+		for (unsigned i = 0; i < unsigned(m_pointLights.size()); i++)
+			drawCommands.push_back({ m_meshes[2].GetIndexCount(), 1, m_meshes[2].GetIndexOffset(), 0, 0 });
+		m_commandBuffers.push_back(GLR::CreateDrawCommandBuffer(drawCommands));
+#endif
+
+#ifdef DRAW_INDIRECT
+		{
+			drawCommands.clear();
 			drawCommands.reserve(m_meshes.size());
 			GLuint vao = 0;
 			for (unsigned i = 0; i < unsigned(m_meshes.size()); i++)
@@ -68,12 +89,7 @@ public:
 					m_commandBuffers.push_back(GLR::CreateDrawCommandBuffer(drawCommands));
 			}
 		}
-
-		m_pointLights.reserve(4096);
-		for(unsigned i = 0; i < 4096; i++)
-		{
-			m_pointLights.emplace_back(glm::vec3(((rand() % 360) - 180) * 0.1f, (rand() % 140) * 0.1f, ((rand() % 220) - 110) * 0.1f), glm::vec4(1.0f, 1.0f, 1.0f, 0.1f), 1.0f, 0.0f, 0.0f);
-		}
+#endif
 	}
 	~DeferredDemo()
 	{
@@ -111,22 +127,22 @@ public:
 		for (unsigned j = 0; j < 1; j++)
 		{
 			modelMatrix->Set(glm::translate(glm::vec3(j * 64.0f, 0.0f, 0.0f)));
+#ifndef DRAW_INDIRECT
 			for(unsigned i = 0; i < unsigned(m_meshes.size()); i++)
 			{
 				GLR::BindMesh(m_meshes[i]);
 				GLR::DrawIndexed(m_meshes[i].GetIndexCount(), m_meshes[i].GetIndexOffset());
 			}
-
-			/*for (unsigned i = 0; i < unsigned(m_commandBuffers.size()); i++)
-				GLR::DrawIndexedIndirect(m_commandBuffers[i]);*/
+#else
+			GLR::BindMesh(m_meshes[3]);
+#ifdef ADVANCED_CULLING
+			GLR::DrawIndexedIndirect(m_commandBuffers[3]);
+#else
+			GLR::DrawIndexedIndirect(m_commandBuffers[2]);
+#endif
+#endif
 		}
 		GLR::UnbindShader();
-
-		/*GLR::BindFramebuffer(*m_framebuffer);
-		GLR::Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		modelMatrix->Set(glm::translate(glm::vec3(0.0f, 0.0f, 3.0f)) * glm::rotate(float(glfwGetTime()), glm::vec3(0.0f, 1.0f, 0.0f)));
-		GLR::DrawIndexed(36);
-		GLR::UnbindFramebuffer();*/
 
 		// Light pass
 		GLR::UnbindFramebuffer();
@@ -139,11 +155,21 @@ public:
 		m_shaders[2]->GetUniform("normalSampler")->Set(*GLR::Texture2D::GetItem("TestFBO_1"));
 		m_shaders[2]->GetUniform("depthSampler")->Set(*GLR::Texture2D::GetItem("TestFBO_depth"));
 
-		GLR::BindMesh(m_meshes[0]);
-
 		std::shared_ptr<char> pointLightBuffer;
 		unsigned pointLightBufferSize;
 		GLR::Light<GLR::PointLight>::GetBuffer(pointLightBuffer, pointLightBufferSize);
+#ifdef ANIMATED_LIGHTS
+		unsigned plSize = sizeof(GLR::PointLight) + (16 - (sizeof(GLR::PointLight) % 16));
+		for (unsigned i = 0; i < (pointLightBufferSize / plSize); i++)
+		{
+			GLR::PointLight* pl = reinterpret_cast<GLR::PointLight*>(&pointLightBuffer.get()[i * plSize]);
+			pl->SetPosition(pl->GetPosition() + glm::vec3(glm::sin(glfwGetTime()) * glm::sign(int(i % 6) - 3), 0.0f, glm::cos(glfwGetTime()) * glm::sign(int(i % 12) - 4)) * 4.0f);
+		}
+#endif
+
+#ifndef ADVANCED_CULLING
+		GLR::BindMesh(m_meshes[0]);
+		
 		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + (16 - (unsigned(sizeof(GLR::PointLight)) % 16))) * 1024;
 		for (unsigned i = 0; i < pointLightBufferSize / maxBufferSize; i++)
 		{
@@ -151,6 +177,32 @@ public:
 			m_shaders[2]->GetUniform("numPointLights")->Set(glm::min(GLR::Light<GLR::PointLight>::GetCount() - 1024 * i, 1024u));
 			GLR::DrawIndexed(m_meshes[0].GetIndexCount());
 		}
+
+		/*std::shared_ptr<char> pointLightBuffer;
+		unsigned pointLightBufferSize;
+		GLR::Light<GLR::PointLight>::GetBuffer(pointLightBuffer, pointLightBufferSize);
+		m_shaders[2]->GetShaderStorageBlock("PointLightBlock")->UpdateContents(pointLightBuffer.get(), pointLightBufferSize);
+		m_shaders[2]->GetUniform("numPointLights")->Set(GLR::Light<GLR::PointLight>::GetCount());
+		GLR::DrawIndexed(m_meshes[0].GetIndexCount());*/
+#else
+		GLR::SetRasterizationState(true, GL_FRONT, GL_CCW);
+		GLR::BindMesh(m_meshes[2]);
+
+		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + (16 - (unsigned(sizeof(GLR::PointLight)) % 16))) * 1024;
+		for (unsigned i = 0; i < unsigned(ceil(float(pointLightBufferSize) / float(maxBufferSize))); i++)
+		{
+			m_shaders[2]->GetUniformBlock("PointLightBlock")->UpdateContents(&pointLightBuffer.get()[i * maxBufferSize], glm::min(maxBufferSize, pointLightBufferSize - maxBufferSize * i), 0);
+			GLR::DrawIndexedIndirect(m_commandBuffers[0]);
+		}
+
+		/*std::shared_ptr<char> pointLightBuffer;
+		unsigned pointLightBufferSize;
+		GLR::Light<GLR::PointLight>::GetBuffer(pointLightBuffer, pointLightBufferSize);
+		m_shaders[2]->GetShaderStorageBlock("PointLightBlock")->UpdateContents(pointLightBuffer.get(), pointLightBufferSize);
+		GLR::DrawIndexed(m_meshes[0].GetIndexCount());*/
+
+		GLR::SetRasterizationState(true, GL_BACK, GL_CCW);
+#endif
 
 		GLR::SetDepthState(true, true, GL_LESS);
 		GLR::SetBlendState(false, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -168,7 +220,7 @@ private:
 
 int main()
 {
-	DeferredDemo DeferredDemo(640, 480, "DeferredDemo", false);
+	DeferredDemo DeferredDemo(1920, 1080, "DeferredDemo", false);
 	DeferredDemo.StartGameLoop();
 
 	return 0;

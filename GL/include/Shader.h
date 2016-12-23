@@ -154,6 +154,36 @@ namespace GLR
 		GLuint bufferSize;
 	};
 
+	struct ShaderStorageBlock
+	{
+		ShaderStorageBlock() : name(""), bufferID(-1), binding(-1), bufferSize(0)
+		{}
+		ShaderStorageBlock(const std::string& name, GLint buffer, GLint binding) : name(name), bufferID(buffer), binding(binding), bufferSize(0)
+		{}
+
+		void UpdateContents(const char* data, unsigned size)
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufferID);
+			if (size > bufferSize)
+			{
+				glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, GL_STREAM_DRAW);
+				GL_GET_ERROR();
+				bufferSize = size;
+			}
+			else
+			{
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, data);
+				GL_GET_ERROR();
+			}
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+
+		std::string name;
+		GLint bufferID;
+		GLint binding;
+		GLuint bufferSize;
+	};
+
 	class Shader : public ManagedItem<Shader>
 	{
 	public:
@@ -169,6 +199,7 @@ namespace GLR
 		GLuint GetProgram() const;
 		const InputParameter* GetUniform(const std::string& name) const;
 		const UniformBlock* GetUniformBlock(const std::string& name) const;
+		ShaderStorageBlock* GetShaderStorageBlock(const std::string& name);
 
 	private:
 		static void CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource);
@@ -177,12 +208,16 @@ namespace GLR
 		void LoadUniforms();
 		void LoadAttributes();
 		void LoadUniformBlocks();
+		void LoadShaderStorageBlocks();
 
 		GLuint m_programID = 0;
 		std::map<std::string, InputParameter> m_uniforms;
 		std::map<std::string, InputParameter> m_attributes;
 		std::map<std::string, UniformBlock> m_uniformBlocks;
 		static std::map<std::string, UniformBlock> m_globalUniformBlocks;
-		static unsigned m_bindingOffset;
+		std::map<std::string, ShaderStorageBlock> m_shaderStorageBlocks;
+		static std::map<std::string, ShaderStorageBlock> m_globalShaderStorageBlocks;
+		static unsigned m_uniformBindingOffset;
+		static unsigned m_shaderStorageBindingOffset;
 	};
 }

@@ -52,6 +52,11 @@ GLR::PointLight::~PointLight()
 	Light<GLR::PointLight>::Remove(this);
 }
 
+void GLR::PointLight::SetPosition(const glm::vec3& position)
+{
+	m_position = position;
+}
+
 const glm::vec3& GLR::PointLight::GetPosition() const
 {
 	return m_position;

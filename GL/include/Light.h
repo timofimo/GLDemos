@@ -63,6 +63,8 @@ namespace GLR
 		PointLight(const glm::vec3& position, const glm::vec4& color, float exponent, float linear, float constant);
 		~PointLight();
 
+		void SetPosition(const glm::vec3& position);
+
 		const glm::vec3& GetPosition() const;
 		const glm::vec4& GetColor() const;
 		float GetRange() const;
