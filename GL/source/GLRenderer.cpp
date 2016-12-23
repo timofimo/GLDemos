@@ -279,10 +279,7 @@ void GLR::Initialize()
 	memset(Internal::rendererState.boundTextures.get(), 0, sizeof(GLuint) * Internal::rendererState.numTextureUnits);
 
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &Internal::rendererState.maxUniformBlockSize);
-	printf_s("%i\n", Internal::rendererState.maxUniformBlockSize);
-
 	glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &Internal::rendererState.maxShaderStorageBlockSize);
-	printf_s("%i\n", Internal::rendererState.maxShaderStorageBlockSize);
 }
 
 void GLR::Clear(GLbitfield mask)
