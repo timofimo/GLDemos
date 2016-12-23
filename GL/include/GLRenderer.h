@@ -37,6 +37,7 @@ namespace GLR
 
 	void Clear(GLbitfield mask);
 	void DrawIndexed(unsigned count, unsigned offset = 0);
+	void DrawLinesIndexed(unsigned count, unsigned offset = 0);
 	void DrawIndexedIndirect(unsigned bufferIndex);
 
 	unsigned CreateDrawCommandBuffer(const std::vector<DrawElementsIndirectCommand>& drawCommands);

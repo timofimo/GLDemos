@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\BVH.h" />
     <ClInclude Include="include\ExampleBase\Camera.h" />
     <ClInclude Include="include\ExampleBase\ExampleBase.h" />
     <ClInclude Include="include\ExampleBase\Input.h" />
@@ -30,6 +31,7 @@
     <ClInclude Include="include\Mesh.h" />
     <ClInclude Include="include\MeshBuffer.h" />
     <ClInclude Include="include\Model.h" />
+    <ClInclude Include="include\PhysicsShapes.h" />
     <ClInclude Include="include\ResourceLoader.h" />
     <ClInclude Include="include\Shader.h" />
     <ClInclude Include="include\Texture.h" />
@@ -38,12 +40,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="include\glad.c" />
+    <ClCompile Include="source\BVH.cpp" />
     <ClCompile Include="source\Framebuffer.cpp" />
     <ClCompile Include="source\GLRenderer.cpp" />
     <ClCompile Include="source\Light.cpp" />
     <ClCompile Include="source\Mesh.cpp" />
     <ClCompile Include="source\MeshBuffer.cpp" />
     <ClCompile Include="source\Model.cpp" />
+    <ClCompile Include="source\PhysicsShapes.cpp" />
     <ClCompile Include="source\ResourceLoader.cpp" />
     <ClCompile Include="source\Shader.cpp" />
     <ClCompile Include="source\Texture.cpp" />

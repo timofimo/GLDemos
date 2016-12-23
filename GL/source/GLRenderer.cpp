@@ -296,6 +296,14 @@ void GLR::DrawIndexed(unsigned count, unsigned offset)
 	GL_GET_ERROR();
 }
 
+void GLR::DrawLinesIndexed(unsigned count, unsigned offset)
+{
+	offset *= sizeof(unsigned);
+	uint64_t tempOffset = offset;
+	glDrawElements(GL_LINE_LOOP, count, GL_UNSIGNED_INT, reinterpret_cast<void*>(tempOffset));
+	GL_GET_ERROR();
+}
+
 void GLR::DrawIndexedIndirect(unsigned bufferIndex)
 {
 	GL_GET_ERROR();
