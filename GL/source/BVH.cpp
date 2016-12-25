@@ -8,20 +8,19 @@ struct BVHBuildEntry
 
 struct GLR::BVHFlatNode 
 {
+	unsigned start;
 	BBox bbox;
-	unsigned start, nShapes, rightOffset;
+	unsigned rightOffset;
 };
 
-struct BVHTraversal 
-{
-	unsigned i;
-	BVHTraversal() { }
-	BVHTraversal(int _i) : i(_i) { }
-};
-
-GLR::BVH::BVH(std::vector<BBox>& shapes, unsigned leafSize) : m_nNodes(0), m_leafSize(leafSize), m_nLeafs(0)
+GLR::BVH::BVH(std::vector<BBox>& shapes) : m_nNodes(0), m_leafSize(1), m_nLeafs(0)
 {
 	Build(shapes);
+}
+
+GLR::BVH::BVH(std::vector<BBox>& shapes, char* data, unsigned elementSize) : m_nNodes(0), m_leafSize(1), m_nLeafs(0)
+{
+	Build(shapes, data, elementSize);
 }
 
 GLR::BVH::~BVH()
@@ -35,31 +34,28 @@ std::vector<unsigned> GLR::BVH::Intersect(const glm::vec3& point) const
 	if (m_flatTree.empty())
 		return result;
 
-	BVHTraversal todo[64];
+	unsigned todo[64];
 	int stackptr = 0;
 
-	todo[stackptr].i = 0;
+	todo[stackptr] = 0;
 
 	while(stackptr >= 0)
 	{
-		int ni = todo[stackptr].i;
+		unsigned ni = todo[stackptr];
 		--stackptr;
 		const BVHFlatNode& node(m_flatTree[ni]);
 
 		if(node.rightOffset == 0)
 		{
-			for(unsigned i = 0; i < node.nShapes; i++)
-			{
-				if (node.bbox.Contains(point))
-					result.push_back(ni);
-			}
+			if (node.bbox.Contains(point))
+				result.push_back(ni);
 		}
 		else
 		{
 			if (m_flatTree[ni + 1].bbox.Contains(point))
-				todo[++stackptr] = BVHTraversal(ni + 1);
+				todo[++stackptr] = ni + 1;
 			if (m_flatTree[ni + node.rightOffset].bbox.Contains(point))
-				todo[++stackptr] = BVHTraversal(ni + node.rightOffset);
+				todo[++stackptr] = ni + node.rightOffset;
 		}
 	}
 
@@ -74,8 +70,25 @@ GLR::BBox GLR::BVH::Get(unsigned index) const
 	return m_flatTree[index].bbox;
 }
 
-void GLR::BVH::Build(std::vector<BBox>& shapes)
+const GLR::BVHFlatNode* GLR::BVH::GetTree() const
 {
+	return m_flatTree.data();
+}
+
+unsigned GLR::BVH::GetTreeSize() const
+{
+	return unsigned(m_flatTree.size());
+}
+
+unsigned GLR::BVH::GetTreeSizeBytes() const
+{
+	return unsigned(m_flatTree.size()) * sizeof(BVHFlatNode);
+}
+
+void GLR::BVH::Build(std::vector<BBox>& shapes, char* data, unsigned elementSize)
+{
+	char* tempElement = new char[elementSize];
+
 	BVHBuildEntry todo[128];
 	unsigned stackptr = 0;
 	const unsigned untouched = 0xffffffff;
@@ -100,7 +113,6 @@ void GLR::BVH::Build(std::vector<BBox>& shapes)
 
 		++m_nNodes;
 		node.start = start;
-		node.nShapes = nShapes;
 		node.rightOffset = untouched;
 
 		BBox bb(shapes[start]);
@@ -140,6 +152,13 @@ void GLR::BVH::Build(std::vector<BBox>& shapes)
 		{
 			if(shapes[i].Center()[splitDimension] < splitCoord)
 			{
+				if (data && elementSize)
+				{
+					memcpy(tempElement, &data[i * elementSize], elementSize);
+					memcpy(&data[i * elementSize], &data[mid * elementSize], elementSize);
+					memcpy(&data[mid * elementSize], tempElement, elementSize);
+				}
+
 				std::swap(shapes[i], shapes[mid]);
 				++mid;
 			}
@@ -158,4 +177,6 @@ void GLR::BVH::Build(std::vector<BBox>& shapes)
 		todo[stackptr].parent = m_nNodes - 1;
 		++stackptr;
 	}
+
+	delete[] tempElement;
 }

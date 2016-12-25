@@ -9,8 +9,8 @@
 #include <glm/gtc/random.hpp>
 
 #define DRAW_INDIRECT
-#define ADVANCED_CULLING
-#define ANIMATED_LIGHTS
+//#define ADVANCED_CULLING
+//#define ANIMATED_LIGHTS
 
 // Quad
 const float vertexData[] = 
@@ -54,11 +54,9 @@ public:
 
 		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
 
-		m_pointLights.reserve(2048);
-		for (unsigned i = 0; i < 2048; i++)
-		{
-			m_pointLights.emplace_back(glm::linearRand(glm::vec3(-18.0f, 0.0f, -22.0f), glm::vec3(18.0f, 14.0f, 22.0f)), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
-		}
+		m_pointLights.reserve(1024);
+		for (unsigned i = 0; i < 1024; i++)
+			m_pointLights.emplace_back(glm::linearRand(glm::vec3(-15.0f, 0.0f, -8.0f), glm::vec3(15.0f, 14.0f, 8.0f)), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 2.0f);
 
 		std::vector<GLR::DrawElementsIndirectCommand> drawCommands;
 #ifdef ADVANCED_CULLING
@@ -171,7 +169,7 @@ public:
 #ifndef ADVANCED_CULLING
 		GLR::BindMesh(m_meshes[0]);
 		
-		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + (16 - (unsigned(sizeof(GLR::PointLight)) % 16))) * 1024;
+		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + ((16 - (unsigned(sizeof(GLR::PointLight)) % 16)) % 16)) * 1024;
 		for (unsigned i = 0; i < pointLightBufferSize / maxBufferSize; i++)
 		{
 			m_shaders[2]->GetUniformBlock("PointLightBlock")->UpdateContents(&pointLightBuffer.get()[i * maxBufferSize], glm::min(maxBufferSize, pointLightBufferSize - maxBufferSize * i), 0);
@@ -189,7 +187,7 @@ public:
 		GLR::SetRasterizationState(true, GL_FRONT, GL_CCW);
 		GLR::BindMesh(m_meshes[2]);
 
-		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + ((16 - (sizeof(GLR::PointLight) % 16)) % 16)) * 1024;
+		unsigned maxBufferSize = (unsigned(sizeof(GLR::PointLight)) + ((16 - (unsigned(sizeof(GLR::PointLight)) % 16)) % 16)) * 1024;
 		for (unsigned i = 0; i < unsigned(ceil(float(pointLightBufferSize) / float(maxBufferSize))); i++)
 		{
 			m_shaders[2]->GetUniformBlock("PointLightBlock")->UpdateContents(&pointLightBuffer.get()[i * maxBufferSize], glm::min(maxBufferSize, pointLightBufferSize - maxBufferSize * i), 0);

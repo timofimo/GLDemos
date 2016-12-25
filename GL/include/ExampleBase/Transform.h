@@ -1,7 +1,9 @@
 #pragma once
+#pragma warning(push, 0)
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#pragma warning(pop)
 #include <vector>
 #include <algorithm>
 

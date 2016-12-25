@@ -12,7 +12,7 @@ struct PointLight
 
 uniform PointLightBlock
 {
-	PointLight pointLights[1024];
+	PointLight pointLights[2048];
 } pl;
 
 /*buffer PointLightBlock
