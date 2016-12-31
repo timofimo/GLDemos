@@ -406,6 +406,15 @@ void GLR::UnbindShader()
 	}
 }
 
+void GLR::UnbindMesh()
+{
+	if (Internal::rendererState.boundVertexArray != 0)
+	{
+		glBindVertexArray(0);
+		Internal::rendererState.boundVertexArray = 0;
+	}
+}
+
 void GLR::SetClearColor(float r, float g, float b, float a)
 {
 	glClearColor(r, g, b, a);

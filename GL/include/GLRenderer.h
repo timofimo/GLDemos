@@ -50,6 +50,7 @@ namespace GLR
 	
 	void UnbindFramebuffer();
 	void UnbindShader();
+	void UnbindMesh();
 
 	void SetClearColor(float r, float g, float b, float a);
 	void SetViewport(int x, int y, int width, int height);
