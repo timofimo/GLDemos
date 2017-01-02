@@ -30,6 +30,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkeletalAnimationDemo", "Sk
 		{47607A23-F1DF-41ED-9B17-627D18C0138B} = {47607A23-F1DF-41ED-9B17-627D18C0138B}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TiledDeferredDemo", "TiledDeferredDemo\TiledDeferredDemo.vcxproj", "{A355DD16-5928-4BD6-9089-238AF7983A3E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{47607A23-F1DF-41ED-9B17-627D18C0138B} = {47607A23-F1DF-41ED-9B17-627D18C0138B}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -86,6 +91,14 @@ Global
 		{429E0E55-4F8D-4803-A3D5-5CC483A8099A}.Release|x64.Build.0 = Release|x64
 		{429E0E55-4F8D-4803-A3D5-5CC483A8099A}.Release|x86.ActiveCfg = Release|Win32
 		{429E0E55-4F8D-4803-A3D5-5CC483A8099A}.Release|x86.Build.0 = Release|Win32
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Debug|x64.ActiveCfg = Debug|x64
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Debug|x64.Build.0 = Debug|x64
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Debug|x86.ActiveCfg = Debug|Win32
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Debug|x86.Build.0 = Debug|Win32
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Release|x64.ActiveCfg = Release|x64
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Release|x64.Build.0 = Release|x64
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Release|x86.ActiveCfg = Release|Win32
+		{A355DD16-5928-4BD6-9089-238AF7983A3E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -178,6 +178,18 @@ namespace GLR
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 		}
 
+		void Reserve(unsigned size)
+		{
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, bufferID);
+			if (size > bufferSize)
+			{
+				glBufferData(GL_SHADER_STORAGE_BUFFER, size, nullptr, GL_STREAM_DRAW);
+				GL_GET_ERROR();
+				bufferSize = size;
+			}
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+		}
+
 		std::string name;
 		GLint bufferID;
 		GLint binding;
@@ -194,6 +206,7 @@ namespace GLR
 		~Shader();
 
 		static void AddGlobalUniformBlock(const std::string& uniformBlockName);
+		static void AddGlobalShaderStorageBlock(const std::string& shaderStorageBlockName);
 		void CheckCompatibilityMesh(const Mesh* mesh);
 
 		GLuint GetProgram() const;

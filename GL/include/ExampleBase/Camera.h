@@ -23,9 +23,9 @@ public:
 		glm::vec3 forward = GetForward();
 		glm::vec3 right = GetRight();
 
-		float speed = 5.0f;
+		float speed = 50.0f;
 		if (Input::GetKey(GLFW_KEY_LEFT_SHIFT))
-			speed = 25.0f;
+			speed = 250.0f;
 
 		if (Input::GetKey(GLFW_KEY_W))
 			Translate(speed * deltaTime * forward);
@@ -42,6 +42,10 @@ public:
 		return m_projectionMatrix * GetViewMatrix();
 	}
 
+	glm::mat4 GetProjectionMatrix() const
+	{
+		return m_projectionMatrix;
+	}
 private:
 	glm::mat4 m_projectionMatrix;
 };

@@ -111,6 +111,11 @@ void GLR::Shader::AddGlobalUniformBlock(const std::string& uniformBlockName)
 	m_globalUniformBlocks[uniformBlockName] = UniformBlock();
 }
 
+void GLR::Shader::AddGlobalShaderStorageBlock(const std::string& shaderStorageBlockName)
+{
+	m_globalShaderStorageBlocks[shaderStorageBlockName] = ShaderStorageBlock();
+}
+
 void GLR::Shader::CheckCompatibilityMesh(const Mesh* mesh)
 {
 	std::vector<GLenum> meshAttributes = mesh->GetAttributes();
@@ -340,6 +345,9 @@ void GLR::Shader::LoadUniformBlocks()
 
 		if(isGlobal && it->second.bufferID != -1)
 		{
+			if (unsigned(bufferSize) != it->second.bufferSize)
+				LOG_E("Global buffer found of a different size than the first. They should be identical.");
+
 			// If the global block already exists, bind it to the buffer
 			glUniformBlockBinding(m_programID, i, it->second.binding);
 

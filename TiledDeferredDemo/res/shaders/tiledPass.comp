@@ -1,0 +1,157 @@
+#version 450 core
+
+#define TILE_GROUP_DIM 16
+#define MAX_LIGHTS_PER_TILE 128
+
+uniform CameraBlock
+{
+	mat4 viewProjectionMatrix;
+	mat4 invViewProjectionMatrix;
+	mat4 viewMatrix;
+	mat4 projectionMatrix;
+	vec3 position;
+	float paddin;
+	vec2 screenDimensions;
+} camera;
+
+struct PointLight
+{
+	vec3 position;
+	float range;
+	vec3 color;
+	float intensity;
+};
+
+uniform PointLightBlock
+{
+	PointLight pointLights[1024];
+} pl;
+
+buffer LightListIndices
+{
+	int lightListIndices[];
+};
+
+uniform sampler2D depthSampler;
+uniform uint lightCount;
+
+shared uint aMinDepth;
+shared uint aMaxDepth;
+shared uint aLightCount;
+shared vec4 aFrustumPlanes[6];
+shared int visibleLightIndices[MAX_LIGHTS_PER_TILE];
+
+layout(local_size_x = TILE_GROUP_DIM, local_size_y = TILE_GROUP_DIM, local_size_z = 1) in;
+void main()
+{
+	ivec2 location = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 itemID = ivec2(gl_LocalInvocationID.xy);
+	ivec2 tileID = ivec2(gl_WorkGroupID.xy);
+	ivec2 tileNumber = ivec2(gl_NumWorkGroups.xy);
+	uint index = tileID.y * tileNumber.x + tileID.x;
+	
+	// Initialize min/max depth
+	if(gl_LocalInvocationIndex == 0)
+	{
+		aMinDepth = 0xFFFFFFFF;
+		aMaxDepth = 0;
+		aLightCount = 0;
+	}
+	
+	barrier();
+	
+	// Calculate the min/max depth values
+	vec2 texcoord = vec2(location) / camera.screenDimensions;
+	float depth = texture(depthSampler, texcoord).r;
+	// Linearize the depth buffer
+	depth = (0.5 * camera.projectionMatrix[3][2]) / (depth + 0.5 * camera.projectionMatrix[2][2] - 0.5);
+	uint depthInt = floatBitsToUint(depth);
+	atomicMin(aMinDepth, depthInt);
+	atomicMax(aMaxDepth, depthInt);
+	
+	barrier();
+	
+	// Calculate the frustum planes
+	float minDepth, maxDepth;
+	if(gl_LocalInvocationIndex == 0)
+	{
+		// Get min/max depth as a float
+		minDepth = uintBitsToFloat(aMinDepth);
+		maxDepth = uintBitsToFloat(aMaxDepth);
+		
+		// Calculate the step size
+		vec2 negativeStep = (2.0 * vec2(tileID)) / vec2(tileNumber);
+		vec2 positiveStep = (2.0 * vec2(tileID + ivec2(1))) / vec2(tileNumber);
+		
+		// Initialize the planes
+		aFrustumPlanes[0] = vec4(1.0, 0.0, 0.0, 1.0 - negativeStep.x); // Left
+		aFrustumPlanes[1] = vec4(-1.0, 0.0, 0.0, -1.0 + positiveStep.x); // Right
+		aFrustumPlanes[2] = vec4(0.0, 1.0, 0.0, 1.0 - negativeStep.y); // Bottom
+		aFrustumPlanes[3] = vec4(0.0, -1.0, 0.0, -1.0 + positiveStep.y); // Top
+		aFrustumPlanes[4] = vec4(0.0, 0.0, -1.0, -minDepth); // Near
+		aFrustumPlanes[5] = vec4(0.0, 0.0, 1.0, maxDepth); // Far
+		
+		// Transform the planes
+		for(uint i = 0; i < 4; i++)
+		{
+			aFrustumPlanes[i] *= camera.viewProjectionMatrix;
+			aFrustumPlanes[i] /= length(aFrustumPlanes[i].xyz);
+		}
+		
+		aFrustumPlanes[4] *= camera.viewMatrix;
+		aFrustumPlanes[4] /= length(aFrustumPlanes[4].xyz);
+		aFrustumPlanes[5] *= camera.viewMatrix;
+		aFrustumPlanes[5] /= length(aFrustumPlanes[5].xyz);
+	}
+	
+	barrier();
+	
+	// Cull the lights
+	uint threadCount = TILE_GROUP_DIM * TILE_GROUP_DIM;
+	uint passCount = (lightCount + threadCount - 1) / threadCount;
+	for(uint i = 0; i < passCount; i++)
+	{
+		uint lightIndex = i * threadCount + gl_LocalInvocationIndex;
+		if(lightIndex >= lightCount)
+		{
+			break;
+		}
+		
+		vec4 position = vec4(pl.pointLights[lightIndex].position, 1.0);
+		float radius = pl.pointLights[lightIndex].range;
+		
+		// Check light against frustum
+		float distance = 0.0;
+		for(uint j = 0; j < 6; j++)
+		{
+			distance = dot(position, aFrustumPlanes[j]) + radius;
+			
+			if(distance <= 0.0)
+			{
+				break;
+			}
+		}
+		
+		if(distance > 0.0)
+		{
+			uint offset = atomicAdd(aLightCount, 1);
+			visibleLightIndices[offset] = int(lightIndex);
+		}
+	}
+	
+	barrier();
+	
+	if(gl_LocalInvocationIndex == 0)
+	{
+		uint offset = index * MAX_LIGHTS_PER_TILE;
+		for(uint i = 0; i < aLightCount; i++)
+		{
+			lightListIndices[offset + i] = visibleLightIndices[i];
+		}
+		
+		if(aLightCount != MAX_LIGHTS_PER_TILE)
+		{
+			lightListIndices[offset + aLightCount] = -1;
+		}
+	}
+}

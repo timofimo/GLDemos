@@ -27,10 +27,10 @@ const unsigned indexData[] =
 	0, 2, 3,
 };
 
-class DeferredDemo : public ExampleBase
+class TiledDeferredDemo : public ExampleBase
 {
 public:
-	DeferredDemo(unsigned width, unsigned height, const char* title, bool borderless)
+	TiledDeferredDemo(unsigned width, unsigned height, const char* title, bool borderless)
 		: ExampleBase(width, height, title, borderless), m_camera(glm::radians(60.0f), float(width) / float(height), 0.1f, 2000.0f)
 	{
 		m_meshes.push_back(GLR::Mesh("Quad", vertexData, 12, indexData, 6, std::vector<GLenum>{ GL_FLOAT_VEC3}));
@@ -38,11 +38,11 @@ public:
 		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/sponza/sponza.fbx", m_meshes, GLR::EBatchType::PerFile);
 
 		GLR::Shader::AddGlobalUniformBlock("CameraBlock");
-		m_shaders[1] = std::make_unique<GLR::Shader>("geometryShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/geometryPass.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/geometryPass.frag");
+		m_shaders[1] = std::make_unique<GLR::Shader>("geometryShader", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/geometryPass.vert", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/geometryPass.frag");
 #ifndef ADVANCED_CULLING
-		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPass.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPass.frag");
+		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPass.vert", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPass.frag");
 #else
-		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPassAdvanced.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPassAdvanced.frag");
+		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPassAdvanced.vert", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPassAdvanced.frag");
 #endif
 
 		GLR::SetClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -90,7 +90,7 @@ public:
 		}
 #endif
 	}
-	~DeferredDemo()
+	~TiledDeferredDemo()
 	{
 	}
 
@@ -219,8 +219,8 @@ private:
 
 int main()
 {
-	DeferredDemo DeferredDemo(1920, 1080, "DeferredDemo", false);
-	DeferredDemo.StartGameLoop();
+	TiledDeferredDemo TiledDeferredDemo(1920, 1080, "TiledDeferredDemo", false);
+	TiledDeferredDemo.StartGameLoop();
 
 	return 0;
 }
