@@ -1,3 +1,4 @@
+#include <PCH.h>
 #include "GLRenderer.h"
 #include "Shader.h"
 #include "Mesh.h"
@@ -6,7 +7,6 @@
 #include "ExampleBase/Camera.h"
 #include "Framebuffer.h"
 #include "Light.h"
-#include <glm/gtc/random.hpp>
 
 #define DRAW_INDIRECT
 //#define ADVANCED_CULLING
@@ -35,14 +35,13 @@ public:
 	{
 		m_meshes.push_back(GLR::Mesh("Quad", vertexData, 12, indexData, 6, std::vector<GLenum>{ GL_FLOAT_VEC3}));
 		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/primitives.fbx", m_meshes, GLR::EBatchType::PerFile);
-		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/sponza/sponza.fbx", m_meshes, GLR::EBatchType::PerFile);
 
 		GLR::Shader::AddGlobalUniformBlock("CameraBlock");
-		m_shaders[1] = std::make_unique<GLR::Shader>("geometryShader", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/geometryPass.vert", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/geometryPass.frag");
+		m_shaders[1] = std::make_unique<GLR::Shader>("geometryShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/geometryPass.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/geometryPass.frag");
 #ifndef ADVANCED_CULLING
-		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPass.vert", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPass.frag");
+		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPass.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPass.frag");
 #else
-		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPassAdvanced.vert", "D:/Programming/GLDemos/TiledDeferredDemo/res/shaders/lightPassAdvanced.frag");
+		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPassAdvanced.vert", "D:/Programming/GLDemos/DeferredDemo/res/shaders/lightPassAdvanced.frag");
 #endif
 
 		GLR::SetClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -52,7 +51,7 @@ public:
 
 		m_camera.SetPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 
-		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
+		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, 0, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
 
 		m_pointLights.reserve(1024);
 		for (unsigned i = 0; i < 1024; i++)
@@ -219,7 +218,7 @@ private:
 
 int main()
 {
-	TiledDeferredDemo TiledDeferredDemo(1920, 1080, "TiledDeferredDemo", false);
+	TiledDeferredDemo TiledDeferredDemo(1280, 720, "TiledDeferredDemo", false);
 	TiledDeferredDemo.StartGameLoop();
 
 	return 0;

@@ -1,6 +1,4 @@
 #pragma once
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 
 namespace GLR
 {
@@ -33,6 +31,11 @@ namespace GLR
 		virtual void GetWindowRes(unsigned& outWidth, unsigned& outHeight) = 0;
 
 		/**
+		 * \brief Closes the window.
+		 */
+		virtual void Close() = 0;
+
+		/**
 		 * \brief Returns true if the window should close
 		 */
 		virtual bool ShouldClose() = 0;
@@ -54,8 +57,10 @@ namespace GLR
 		void Initialize(unsigned width, unsigned height, const char* title, bool borderless) override;
 		void Destroy() override;
 		void GetWindowRes(unsigned& outWidth, unsigned& outHeight) override;
+		void Close() override;
 		bool ShouldClose() override;
 		void SwapBuffers() override;
+		GLFWwindow* GetHandle() const;
 
 		static void SetInputCallback(void(*function)(int, int));
 	private:

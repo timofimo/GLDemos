@@ -1,5 +1,4 @@
 #pragma once
-#include <vector>
 #include "PhysicsShapes.h"
 
 namespace GLR

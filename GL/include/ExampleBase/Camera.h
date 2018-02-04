@@ -1,7 +1,6 @@
 #pragma once
 #include <ExampleBase/Transform.h>
 #include <ExampleBase/Input.h>
-#include <glm/gtx/string_cast.hpp>
 
 class Camera : public Transform
 {
@@ -23,9 +22,9 @@ public:
 		glm::vec3 forward = GetForward();
 		glm::vec3 right = GetRight();
 
-		float speed = 50.0f;
+		float speed = 1.0f;
 		if (Input::GetKey(GLFW_KEY_LEFT_SHIFT))
-			speed = 250.0f;
+			speed = 50.0f;
 
 		if (Input::GetKey(GLFW_KEY_W))
 			Translate(speed * deltaTime * forward);

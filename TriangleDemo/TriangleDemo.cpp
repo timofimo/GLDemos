@@ -1,3 +1,4 @@
+#include <PCH.h>
 #include "GLRenderer.h"
 #include "Window.h"
 #include "Shader.h"
@@ -20,12 +21,13 @@ public:
 		m_triangle = std::make_unique<GLR::Mesh>("Triangle", vertices, 15, indices, 3, std::vector<GLenum>{ GL_FLOAT_VEC2, GL_FLOAT_VEC3 });
 
 		GLR::Shader::AddGlobalUniformBlock("CameraBlock");
-		m_shader = std::make_unique<GLR::Shader>("SimpleShader", "D:/Programming/GLDemos/TriangleDemo/res/shaders/cubeDemo.vert", "D:/Programming/GLDemos/TriangleDemo/res/shaders/cubeDemo.frag");
+		m_shader = std::make_unique<GLR::Shader>("SimpleShader", "D:/Programming/GLDemos/TriangleDemo/res/shaders/triangleDemo.vert", "D:/Programming/GLDemos/TriangleDemo/res/shaders/triangleDemo.frag");
 
 		GLR::BindMesh(*m_triangle);
 		GLR::BindShader(*m_shader);
 
 		GLR::SetClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
 	}
 	~TriangleDemo()
 	{
@@ -37,7 +39,8 @@ public:
 
 	virtual void Render() override
 	{
-		GLR::DrawIndexed(36);
+		m_shader->GetUniform("Color")->Set(glm::vec3(1.0f));
+		GLR::DrawIndexed(3);
 	}
 
 private:
@@ -47,7 +50,7 @@ private:
 
 int main()
 {
-	TriangleDemo triangleDemo(640, 480, "TriangleDemo", false);
+	TriangleDemo triangleDemo(1280, 720, "TriangleDemo", false);
 	triangleDemo.StartGameLoop();
 
 	return 0;

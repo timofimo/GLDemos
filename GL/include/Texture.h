@@ -1,5 +1,4 @@
 #pragma once
-#include "Utilities.h"
 
 namespace GLR
 {
@@ -18,22 +17,25 @@ namespace GLR
 	public:
 		Texture2D(const std::string& name, const std::string& file, int flags = NONE);
 		Texture2D(const std::string& name, const unsigned char* data, int width, int height, int channels, int flags = NONE);
-		Texture2D(const std::string& name, int width, int height, int channels, GLenum dataType);
-		Texture2D(const std::string& name, int width, int height, GLenum depthBufferFormat);
+		Texture2D(const std::string& name, int width, int height, int channels, int msaa, GLenum dataType);
+		Texture2D(const std::string& name, int width, int height, int msaa, GLenum depthBufferFormat);
 		~Texture2D();
 
 		int GetWidth() const;
 		int GetHeight() const;
 		int GetChannels() const;
+		int GetMSAA() const;
 		void GetDimensions(int& width, int& height) const;
 		GLuint GetTextureID() const;
+		uint64_t GetHandle() const;
 
 	private:
 		void InitializeTexture(const unsigned char* data);
 
 		GLuint m_textureID;
-		int m_width, m_height, m_channels, m_flags;
+		int m_width, m_height, m_channels, m_msaa, m_flags;
 		GLenum m_dataType, m_internalFormat, m_format;
+		uint64_t m_handle;
 	};
 
 }

@@ -1,8 +1,4 @@
 #pragma once
-#include <fstream>
-#include <glad/glad.h>
-#include <map>
-#include <assert.h>
 
 namespace GLR
 {
@@ -10,7 +6,7 @@ namespace GLR
 {																	\
 	char buffer[1024];												\
 	sprintf_s(buffer, macro_format, ##__VA_ARGS__);					\
-    throw std::runtime_error(buffer);								\
+    assert(false);								\
 }
 
 	inline void ReadFile(const char* file, char* (&data), unsigned& size)
@@ -65,8 +61,8 @@ namespace GLR
 			auto it = m_items.find(name);
 			if(it != m_items.end())
 				return it->second;
-			
-			LOG_E("No such item");
+
+			return nullptr;
 		}
 	};
 	template<class T>

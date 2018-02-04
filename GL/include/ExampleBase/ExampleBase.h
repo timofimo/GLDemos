@@ -1,11 +1,10 @@
 #pragma once
 #include <Window.h>
 #include <GLRenderer.h>
-#include <Utilities.h>
 #include "Input.h"
 
 #ifdef _DEBUG
-void APIENTRY error_callback(GLenum source, GLenum type, GLuint, GLenum severity, GLsizei, const GLchar* message, const void*)
+inline void APIENTRY error_callback(GLenum source, GLenum type, GLuint, GLenum severity, GLsizei, const GLchar* message, const void*)
 {
 	char* src;
 	switch (source)
@@ -88,7 +87,7 @@ void APIENTRY error_callback(GLenum source, GLenum type, GLuint, GLenum severity
 class ExampleBase
 {
 public:
-	ExampleBase(unsigned width, unsigned height, const char* title, bool borderless) : m_window(width, height, title, borderless)
+	ExampleBase(unsigned width, unsigned height, const char* title, bool borderless) : m_window(width, height, title, borderless), m_windowWidth(width), m_windowHeight(height)
 	{
 		m_window.SetInputCallback(&Input::KeyCallback);
 		GLR::Initialize();
@@ -113,9 +112,13 @@ public:
 			double deltaTime = glfwGetTime() - startTime;
 			startTime += deltaTime;
 
+			if (Input::GetKeyDown(GLFW_KEY_ESCAPE))
+				m_window.Close();
+
 			Update(float(deltaTime));
 			Render();
 			Input::Update();
+
 
 			m_window.SwapBuffers();
 		}
@@ -124,6 +127,11 @@ public:
 	virtual void Update(float deltaTime) = 0;
 	virtual void Render() = 0;
 
+	unsigned GetWindowWidth() const { return m_windowWidth; }
+	unsigned GetWindowHeight() const { return m_windowHeight; }
+	GLFWwindow* GetWindowHandle() const { return m_window.GetHandle(); }
+
 private:
 	GLR::GLFWWindow m_window;
+	unsigned m_windowWidth, m_windowHeight;
 };

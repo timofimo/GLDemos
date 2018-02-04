@@ -1,7 +1,5 @@
-#include "..\include\PhysicsShapes.h"
-#pragma warning(push, 0)
-#include <glm/gtx/norm.hpp>
-#pragma warning(pop)
+#include <PCH.h>
+#include <PhysicsShapes.h>
 
 GLR::BSphere::BSphere() : m_center(), m_radius(0.0f)
 {

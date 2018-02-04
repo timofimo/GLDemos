@@ -1,16 +1,66 @@
-#include "..\include\GLRenderer.h"
+#include <PCH.h>
+#include <GLRenderer.h>
 #include "Shader.h"
-#include <assert.h>
 #include "Mesh.h"
-#include "Utilities.h"
 #include "Texture.h"
 #include "Framebuffer.h"
-#include <queue>
+#include "Image3D.h"
 
 namespace GLR
 {
 	namespace Internal
 	{
+		struct DrawState
+		{			
+			struct
+			{
+				float r, g, b, a;
+			} clearColor;
+			
+			struct
+			{
+				bool r, g, b, a;
+			} colorMask;
+
+			bool msaa;
+
+			void SetClearColor(float r, float g, float b, float a)
+			{
+				if(r != clearColor.r || g != clearColor.g || b != clearColor.b || a != clearColor.a)
+				{
+					glClearColor(r, g, b, a);
+					clearColor.r = r;
+					clearColor.g = g;
+					clearColor.b = b;
+					clearColor.a = a;
+				}
+			}
+
+			void SetColorMask(bool r, bool g, bool b, bool a)
+			{
+				if (r != colorMask.r || g != colorMask.g || b != colorMask.b || a != colorMask.a)
+				{
+					glColorMask(r, g, b, a);
+					colorMask.r = r;
+					colorMask.g = g;
+					colorMask.b = b;
+					colorMask.a = a;
+				}
+			}
+
+			void SetMSAA(bool enabled)
+			{
+				if(msaa != enabled)
+				{
+					if (msaa)
+						glEnable(GL_MULTISAMPLE);
+					else
+						glDisable(GL_MULTISAMPLE);
+
+					msaa = enabled;
+				}
+			}
+		};
 		struct ViewportState
 		{
 			int x = -1;
@@ -86,12 +136,12 @@ namespace GLR
 				if (active && !writeEnabled)
 				{
 					glDepthMask(true);
-					testEnabled = true;
+					writeEnabled = true;
 				}
 				else if (!active && writeEnabled)
 				{
 					glDepthMask(false);
-					testEnabled = false;
+					writeEnabled = false;
 				}
 			}
 
@@ -209,6 +259,7 @@ namespace GLR
 		struct RendererState
 		{
 			// Pipeline states
+			DrawState drawState;
 			ViewportState viewportState;
 			BlendState blendState;
 			DepthState depthState;
@@ -219,10 +270,12 @@ namespace GLR
 			GLuint boundShaderProgram = 0;
 			GLuint boundVertexArray = 0;
 			std::unique_ptr<GLuint> boundTextures = nullptr;
+			std::unique_ptr<GLuint> boundImages = nullptr;
 			GLuint boundFramebuffer = 0;
 
 			// System limits
 			GLint numTextureUnits = 0;
+			GLint numImageUnits = 0;
 			GLint maxUniformBlockSize = 0;
 			GLint maxShaderStorageBlockSize = 0;
 		} rendererState;
@@ -278,6 +331,10 @@ void GLR::Initialize()
 	Internal::rendererState.boundTextures.reset(new GLuint[Internal::rendererState.numTextureUnits]);
 	memset(Internal::rendererState.boundTextures.get(), 0, sizeof(GLuint) * Internal::rendererState.numTextureUnits);
 
+	glGetIntegerv(GL_MAX_COMBINED_IMAGE_UNIFORMS, &Internal::rendererState.numImageUnits);
+	Internal::rendererState.boundImages.reset(new GLuint[Internal::rendererState.numImageUnits]);
+	memset(Internal::rendererState.boundImages.get(), 0, sizeof(GLuint) * Internal::rendererState.numImageUnits);
+
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &Internal::rendererState.maxUniformBlockSize);
 	glGetIntegerv(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &Internal::rendererState.maxShaderStorageBlockSize);
 }
@@ -301,6 +358,12 @@ void GLR::DrawLinesIndexed(unsigned count, unsigned offset)
 	offset *= sizeof(unsigned);
 	uint64_t tempOffset = offset;
 	glDrawElements(GL_LINE_LOOP, count, GL_UNSIGNED_INT, reinterpret_cast<void*>(tempOffset));
+	GL_GET_ERROR();
+}
+
+void GLR::DrawPointsInstanced(unsigned count, unsigned offset, unsigned instances)
+{
+	glDrawArraysInstanced(GL_POINTS, offset, count, instances);
 	GL_GET_ERROR();
 }
 
@@ -370,10 +433,58 @@ void GLR::BindTexture(const Texture2D& texture, unsigned unit)
 	{
 		glActiveTexture(GL_TEXTURE0 + unit);
 		GL_GET_ERROR();
-		glBindTexture(GL_TEXTURE_2D, textureID);
+		glBindTexture(texture.GetMSAA() == 0 ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE, textureID);
 		GL_GET_ERROR();
 		Internal::rendererState.boundTextures.get()[unit] = textureID;
 	}
+}
+
+void GLR::BindTexture(const Image3D& texture, unsigned unit)
+{
+	GLuint textureID = texture.GetImageID();
+	assert(textureID != 0 && "Texture hasn't been initialized");
+	assert(textureID < unsigned(Internal::rendererState.numTextureUnits));
+
+	if (textureID != Internal::rendererState.boundTextures.get()[unit])
+	{
+		glActiveTexture(GL_TEXTURE0 + unit);
+		GL_GET_ERROR();
+		glBindTexture(GL_TEXTURE_3D, textureID);
+		GL_GET_ERROR();
+		Internal::rendererState.boundTextures.get()[unit] = textureID;
+	}
+}
+
+void GLR::BindImage(const Image3D& image, unsigned unit)
+{
+	GLuint imageID = image.GetImageID();
+	assert(imageID != 0 && "Texture3D hasn't been initialized");
+	assert(imageID < unsigned(Internal::rendererState.numImageUnits));
+
+	if (imageID != Internal::rendererState.boundImages.get()[unit])
+	{
+		glBindImageTexture(unit, imageID, 0, GL_FALSE, 0, GL_READ_WRITE, image.GetInternalFormat());
+		GL_GET_ERROR();
+		Internal::rendererState.boundImages.get()[unit] = imageID;
+	}
+}
+
+void GLR::BindTextures(const Texture2D* textures, int count, unsigned unit)
+{
+	for (int i = 0; i < count; i++)
+		BindTexture(textures[i], unit + i);
+}
+
+void GLR::BindTextures(const Image3D* textures, int count, unsigned unit)
+{
+	for (int i = 0; i < count; i++)
+		BindTexture(textures[i], unit + i);
+}
+
+void GLR::BindImages(const Image3D* images, int count, unsigned unit)
+{
+	for (int i = 0; i < count; i++)
+		BindImage(images[i], unit + i);
 }
 
 void GLR::BindFramebuffer(const Framebuffer& framebuffer)
@@ -417,7 +528,12 @@ void GLR::UnbindMesh()
 
 void GLR::SetClearColor(float r, float g, float b, float a)
 {
-	glClearColor(r, g, b, a);
+	Internal::rendererState.drawState.SetClearColor(r, g, b, a);
+}
+
+void GLR::SetColorMask(bool r, bool g, bool b, bool a)
+{
+	Internal::rendererState.drawState.SetColorMask(r, g, b, a);
 }
 
 void GLR::SetViewport(int x, int y, int width, int height)
@@ -451,6 +567,11 @@ void GLR::SetRasterizationState(bool faceCulling, GLuint cullFace, GLuint windin
 	Internal::rendererState.rasterizerState.SetActive(faceCulling);
 	Internal::rendererState.rasterizerState.SetCullFace(cullFace);
 	Internal::rendererState.rasterizerState.SetFrontFace(windingOrder);
+}
+
+void GLR::SetMSAA(bool enabled)
+{
+	Internal::rendererState.drawState.SetMSAA(enabled);
 }
 
 GLuint GLR::GetMaxTextureUnit()

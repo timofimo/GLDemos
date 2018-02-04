@@ -1,11 +1,11 @@
-#include "..\include\MeshBuffer.h"
-#include "Utilities.h"
+#include <PCH.h>
+#include <MeshBuffer.h>
 
 struct AttributeInformation
 {
 	unsigned size;
 	unsigned type;
-	UINT64 offset;
+	uint64_t offset;
 };
 
 GLR::MeshBuffer::MeshBuffer(const float* vertexData, unsigned vertexDataCount, const unsigned* indexData, unsigned indexDataCount, const std::vector<GLenum>& attributeTypes)

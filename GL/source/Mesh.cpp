@@ -1,5 +1,5 @@
-#include "..\include\Mesh.h"
-#include "Utilities.h"
+#include <PCH.h>
+#include <Mesh.h>
 
 GLR::Mesh::Mesh(const std::string& name, const std::shared_ptr<MeshBuffer>& meshBuffer, unsigned offset, unsigned size) : ManagedItem<GLR::Mesh>(name, this)
 {

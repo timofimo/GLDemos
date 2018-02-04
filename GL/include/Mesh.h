@@ -1,10 +1,5 @@
 #pragma once
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <vector>
-#include <memory>
 #include "MeshBuffer.h"
-#include "Utilities.h"
 
 namespace GLR
 {

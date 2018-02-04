@@ -1,20 +1,18 @@
 #pragma once
-#include "GL.h"
-#include <vector>
-#include <map>
-#include <glm/glm.hpp>
 #include "Mesh.h"
-#include "Utilities.h"
-#include "Texture.h"
+//#include "Texture.h"
 #include "GLRenderer.h"
+#include "Image3D.h"
+
+class Texture2D;
 
 namespace GLR
 {
 	struct InputParameter
 	{
-		InputParameter() : name(""), location(-1), type(0), sampler(-1)
+		InputParameter() : name(""), location(-1), type(0), arraySize(0), sampler(-1)
 		{}
-		InputParameter(const std::string& name, GLint location, GLenum type, GLint sampler = -1) : name(name), location(location), type(type), sampler(sampler)
+		InputParameter(const std::string& name, GLint location, GLenum type, int arraySize, GLint sampler = -1) : name(name), location(location), type(type), arraySize(arraySize), sampler(sampler)
 		{}
 
 		void Set(const float& f) const
@@ -126,10 +124,156 @@ namespace GLR
 			glUniform1i(location, sampler);
 			GL_GET_ERROR();
 		}
+		void Set(const Image3D& t) const
+		{
+			assert((type == GL_IMAGE_3D || type == GL_INT_IMAGE_3D || type == GL_UNSIGNED_INT_IMAGE_3D) && "The uniform type doesn't match the input type");
+			BindImage(t, sampler);
+			glUniform1i(location, sampler);
+			GL_GET_ERROR();
+		}
+
+		void SetArray(const float* f, int count) const
+		{
+			assert(type == GL_FLOAT && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform1fv(location, count, f);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::vec2* v, int count) const
+		{
+			assert(type == GL_FLOAT_VEC2 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform2fv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::vec3* v, int count) const
+		{
+			assert(type == GL_FLOAT_VEC3 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform3fv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::vec4* v, int count) const
+		{
+			assert(type == GL_FLOAT_VEC4 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform4fv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const int* i, int count) const
+		{
+			assert(type == GL_INT && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform1iv(location, count, i);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::ivec2* v, int count) const
+		{
+			assert(type == GL_INT_VEC2 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform2iv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::ivec3* v, int count) const
+		{
+			assert(type == GL_INT_VEC3 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform3iv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::ivec4* v, int count) const
+		{
+			assert(type == GL_INT_VEC4 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform4iv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const unsigned* u, int count) const
+		{
+			assert(type == GL_UNSIGNED_INT && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform1uiv(location, count, u);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::uvec2* v, int count) const
+		{
+			assert(type == GL_UNSIGNED_INT_VEC2 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform2uiv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::uvec3* v, int count) const
+		{
+			assert(type == GL_UNSIGNED_INT_VEC3 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform3uiv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::uvec4* v, int count) const
+		{
+			assert(type == GL_UNSIGNED_INT_VEC4 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform4uiv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const double* d, int count) const
+		{
+			assert(type == GL_DOUBLE && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform1dv(location, count, d);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::dvec2* v, int count) const
+		{
+			assert(type == GL_DOUBLE_VEC2 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform2dv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::dvec3* v, int count) const
+		{
+			assert(type == GL_DOUBLE_VEC3 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform3dv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::dvec4* v, int count) const
+		{
+			assert(type == GL_DOUBLE_VEC4 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniform4dv(location, count, &v[0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const glm::mat4* m, int count) const
+		{
+			assert(type == GL_FLOAT_MAT4 && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			glUniformMatrix4fv(location, count, false, &m[0][0][0]);
+			GL_GET_ERROR();
+		}
+		void SetArray(const Texture2D* t, int count) const
+		{
+			assert(type == GL_SAMPLER_2D && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			BindTextures(t, count, sampler);
+			for (int i = 0; i < count; i++)
+				glUniform1i(location + i, sampler);
+			GL_GET_ERROR();
+		}
+		void SetArray(const Image3D* t, int count) const
+		{
+			assert((type == GL_IMAGE_3D || type == GL_INT_IMAGE_3D || type == GL_UNSIGNED_INT_IMAGE_3D) && "The uniform type doesn't match the input type");
+			assert(count <= arraySize && "The count is too high");
+			BindImages(t, count, sampler);
+			for (int i = 0; i < count; i++)
+				glUniform1i(location + i, sampler + i);
+			GL_GET_ERROR();
+		}
 
 		std::string name;
 		GLint location;
 		GLenum type;
+		int arraySize;
 		GLint sampler;
 	};
 
@@ -196,13 +340,39 @@ namespace GLR
 		GLuint bufferSize;
 	};
 
+	struct Image
+	{
+		Image() : name(""), imageID(-1), binding(-1), bufferSize(0)
+		{}
+		Image(const std::string& name, GLint binding, GLuint size) : name(name), imageID(-1), binding(binding), bufferSize(size)
+		{}
+
+		void Bind(const Image3D& image)
+		{
+			GLuint id = image.GetImageID();
+			assert(id != 0 && "Image3D hasn't been initialized");
+
+			if (id != imageID)
+			{
+				glBindImageTexture(binding, id, 0, GL_FALSE, 0, GL_RED_INTEGER, GL_RGBA8);
+				GL_GET_ERROR();
+				imageID = id;
+			}
+		}
+
+		std::string name;
+		GLuint imageID;
+		GLint binding;
+		GLuint bufferSize;
+	};
+
 	class Shader : public ManagedItem<Shader>
 	{
 	public:
-		Shader(const std::string& name, const char* computeShader);
-		Shader(const std::string& name, const char* vertexShader, const char* fragmentShader);
-		Shader(const std::string& name, const char* vertexShader, const char* geometryShader, const char* fragmentShader);
-		Shader(const std::string& name, const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType);
+		Shader(const std::string& name, const char* computeShader, const std::vector<std::string>* defines = nullptr);
+		Shader(const std::string& name, const char* vertexShader, const char* fragmentShader, const std::vector<std::string>* defines = nullptr);
+		Shader(const std::string& name, const char* vertexShader, const char* geometryShader, const char* fragmentShader, const std::vector<std::string>* defines = nullptr);
+		Shader(const std::string& name, const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType, const std::vector<std::string>* defines = nullptr);
 		~Shader();
 
 		static void AddGlobalUniformBlock(const std::string& uniformBlockName);
@@ -213,6 +383,8 @@ namespace GLR
 		const InputParameter* GetUniform(const std::string& name) const;
 		const UniformBlock* GetUniformBlock(const std::string& name) const;
 		ShaderStorageBlock* GetShaderStorageBlock(const std::string& name);
+		static const UniformBlock* GetGlobalUniformBlock(const std::string& name);
+		static ShaderStorageBlock* GetGlobalShaderStorageBlock(const std::string& name);
 
 	private:
 		static void CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource);

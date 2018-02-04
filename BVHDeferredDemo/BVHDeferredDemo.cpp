@@ -1,3 +1,4 @@
+#include <PCH.h>
 #include "GLRenderer.h"
 #include "Shader.h"
 #include "Mesh.h"
@@ -10,7 +11,7 @@
 #include "BVH.h"
 #include <glm/gtc/random.hpp>
 
-//#define USE_BVH
+#define USE_BVH
 
 // Quad
 const float vertexData[] = 
@@ -35,14 +36,13 @@ public:
 	{
 		m_meshes.push_back(GLR::Mesh("Quad", vertexData, 12, indexData, 6, std::vector<GLenum>{ GL_FLOAT_VEC3}));
 		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/primitives.fbx", m_meshes, GLR::EBatchType::PerFile);
-		GLR::ResourceLoader::LoadMeshes("D:/Programming/GLDemos/Resources/sponza/sponza.fbx", m_meshes, GLR::EBatchType::PerFile);
 
 		GLR::Shader::AddGlobalUniformBlock("CameraBlock");
-		m_shaders[1] = std::make_unique<GLR::Shader>("geometryShader", "D:/Programming/GLDemos/BVHTiledDeferredDemo/res/shaders/geometryPass.vert", "D:/Programming/GLDemos/BVHTiledDeferredDemo/res/shaders/geometryPass.frag");
+		m_shaders[1] = std::make_unique<GLR::Shader>("geometryShader", "D:/Programming/GLDemos/BVHDeferredDemo/res/shaders/geometryPass.vert", "D:/Programming/GLDemos/BVHDeferredDemo/res/shaders/geometryPass.frag");
 #ifndef USE_BVH
-		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/BVHTiledDeferredDemo/res/shaders/lightPassAdvanced.vert", "D:/Programming/GLDemos/BVHTiledDeferredDemo/res/shaders/lightPassAdvanced.frag");
+		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/BVHDeferredDemo/res/shaders/lightPassAdvanced.vert", "D:/Programming/GLDemos/BVHDeferredDemo/res/shaders/lightPassAdvanced.frag");
 #else
-		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/BVHTiledDeferredDemo/res/shaders/lightPass.vert", "D:/Programming/GLDemos/BVHTiledDeferredDemo/res/shaders/lightPass.frag");
+		m_shaders[2] = std::make_unique<GLR::Shader>("lightShader", "D:/Programming/GLDemos/BVHDeferredDemo/res/shaders/lightPass.vert", "D:/Programming/GLDemos/BVHDeferredDemo/res/shaders/lightPass.frag");
 #endif
 
 
@@ -51,9 +51,9 @@ public:
 		GLR::SetDepthState(true, true, GL_LESS);
 		GLR::SetRasterizationState(true, GL_BACK, GL_CCW);
 
-		m_camera.SetPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+		m_camera.SetPosition(glm::vec3(0.0f, 1.0f, -4.0f));
 
-		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
+		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, 0, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
 
 		m_pointLights.reserve(1024);
 		for (unsigned i = 0; i < 1024; i++)
@@ -207,7 +207,7 @@ private:
 
 int main()
 {
-	BVHTiledDeferredDemo BVHTiledDeferredDemo(1920, 1080, "BVHTiledDeferredDemo", false);
+	BVHTiledDeferredDemo BVHTiledDeferredDemo(1280, 720, "BVHTiledDeferredDemo", false);
 	BVHTiledDeferredDemo.StartGameLoop();
 
 	return 0;

@@ -1,5 +1,5 @@
-#include "..\include\Light.h"
-#include "Utilities.h"
+#include <PCH.h>
+#include <Light.h>
 
 
 GLR::DirectionalLight::DirectionalLight() : DirectionalLight(glm::vec3(), glm::vec4())

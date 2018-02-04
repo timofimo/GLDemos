@@ -1,21 +1,23 @@
-#include "..\include\Framebuffer.h"
-#include <string>
+#include <PCH.h>
+#include <Framebuffer.h>
 
-
-GLR::Framebuffer::Framebuffer(const std::string& name, int width, int height, const std::vector<ColorAttachmentDescription>& colorAttachmentDescriptions, GLenum depthStencilType) : ManagedItem<GLR::Framebuffer>(name, this)
+GLR::Framebuffer::Framebuffer(const std::string& name, int width, int height, int msaa,
+	const std::vector<ColorAttachmentDescription>& colorAttachmentDescriptions, GLenum depthStencilType) : ManagedItem<GLR::Framebuffer>(name, this)
 {
 	glGenFramebuffers(1, &m_framebufferID);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebufferID);
 	GL_GET_ERROR();
 
+	const GLenum target = msaa == 0 ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE;
+
 	std::vector<GLenum> drawBuffers;
 	m_textures.reserve(colorAttachmentDescriptions.size() + (depthStencilType == GL_FALSE ? 0 : 1));
-	for(unsigned i = 0; i < unsigned(colorAttachmentDescriptions.size()); i++)
+	for (unsigned i = 0; i < unsigned(colorAttachmentDescriptions.size()); i++)
 	{
 		std::string textureName = name + "_" + std::to_string(i);
-		m_textures.emplace_back(textureName, width, height, colorAttachmentDescriptions[i].channels, colorAttachmentDescriptions[i].dataType);
+		m_textures.emplace_back(textureName, width, height, colorAttachmentDescriptions[i].channels, msaa, colorAttachmentDescriptions[i].dataType);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, m_textures.back().GetTextureID(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, target, m_textures.back().GetTextureID(), 0);
 		drawBuffers.push_back(GL_COLOR_ATTACHMENT0 + i);
 	}
 	GL_GET_ERROR();
@@ -23,12 +25,12 @@ GLR::Framebuffer::Framebuffer(const std::string& name, int width, int height, co
 	glDrawBuffers(unsigned(drawBuffers.size()), drawBuffers.data());
 	GL_GET_ERROR();
 
-	if(depthStencilType != GL_FALSE)
+	if (depthStencilType != GL_FALSE)
 	{
 		std::string textureName = name + "_depth";
-		m_textures.emplace_back(textureName, width, height, depthStencilType);
+		m_textures.emplace_back(textureName, width, height, msaa, depthStencilType);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_textures.back().GetTextureID(), 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, m_textures.back().GetTextureID(), 0);
 		GL_GET_ERROR();
 	}
 
@@ -51,4 +53,9 @@ GLR::Framebuffer::~Framebuffer()
 GLuint GLR::Framebuffer::GetFramebufferID() const
 {
 	return m_framebufferID;
+}
+
+int GLR::Framebuffer::GetMSAA() const
+{
+	return m_textures.begin()->GetMSAA();
 }

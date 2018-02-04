@@ -1,8 +1,4 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <vector>
-#include <algorithm>
-#include <memory>
 
 namespace GLR
 {

@@ -1,3 +1,4 @@
+#include <PCH.h>
 #include "GLRenderer.h"
 #include "Shader.h"
 #include "Mesh.h"
@@ -63,7 +64,7 @@ public:
 
 		m_camera.SetPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 
-		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
+		m_framebuffer = std::make_unique<GLR::Framebuffer>("TestFBO", width, height, 0, std::vector<GLR::ColorAttachmentDescription>{ {3, GL_UNSIGNED_BYTE}, {3, GL_UNSIGNED_BYTE} }, GL_DEPTH_COMPONENT32F);
 
 		m_pointLights.reserve(1024);
 		for (unsigned i = 0; i < 1024; i++)

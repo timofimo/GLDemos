@@ -1,22 +1,20 @@
-#include "..\include\Shader.h"
-#include <assert.h>
-#include "Utilities.h"
-#include <algorithm>
+#include <PCH.h>
+#include <Shader.h>
 
 std::map<std::string, GLR::UniformBlock> GLR::Shader::m_globalUniformBlocks;
 unsigned GLR::Shader::m_uniformBindingOffset = 0;
 std::map<std::string, GLR::ShaderStorageBlock> GLR::Shader::m_globalShaderStorageBlocks;
 unsigned GLR::Shader::m_shaderStorageBindingOffset = 0;
 
-GLR::Shader::Shader(const std::string& name, const char* computeShader) : Shader(name, {computeShader}, {GL_COMPUTE_SHADER})
+GLR::Shader::Shader(const std::string& name, const char* computeShader, const std::vector<std::string>* defines) : Shader(name, {computeShader}, {GL_COMPUTE_SHADER}, defines)
 {
 }
 
-GLR::Shader::Shader(const std::string& name, const char* vertexShader, const char* fragmentShader) : Shader(name, {vertexShader, fragmentShader}, {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER})
+GLR::Shader::Shader(const std::string& name, const char* vertexShader, const char* fragmentShader, const std::vector<std::string>* defines) : Shader(name, {vertexShader, fragmentShader}, {GL_VERTEX_SHADER, GL_FRAGMENT_SHADER}, defines)
 {
 }
 
-GLR::Shader::Shader(const std::string& name, const char* vertexShader, const char* geometryShader, const char* fragmentShader) : Shader(name, {vertexShader, geometryShader, fragmentShader}, {GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER})
+GLR::Shader::Shader(const std::string& name, const char* vertexShader, const char* geometryShader, const char* fragmentShader, const std::vector<std::string>* defines) : Shader(name, {vertexShader, geometryShader, fragmentShader}, {GL_VERTEX_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER}, defines)
 {
 }
 
@@ -25,7 +23,7 @@ GLR::Shader::Shader(const std::string& name, const char* vertexShader, const cha
  * \param shaderFiles GLSL file location
  * \param shaderType Shader type <GL_VERTEX_SHADER, GL_FRAGMENT_SHADER, ...>
  */
-GLR::Shader::Shader(const std::string& name, const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType) : ManagedItem(name, this)
+GLR::Shader::Shader(const std::string& name, const std::vector<const char*>& shaderFiles, const std::vector<GLenum>& shaderType, const std::vector<std::string>* defines) : ManagedItem(name, this)
 {
 #ifndef NDEBUG
 	if (shaderFiles.size() != shaderType.size())
@@ -74,9 +72,22 @@ GLR::Shader::Shader(const std::string& name, const std::vector<const char*>& sha
 		char* shaderSource;
 		unsigned shaderSourceSize;
 		ReadFile(shaderFiles[i], shaderSource, shaderSourceSize);
-		CompileShader(shaderIDs[i], shaderType[i], shaderSource);
+		std::string source = std::string(shaderSource, shaderSourceSize);
+
+		if (defines != nullptr)
+		{
+			// Insert defines
+			const size_t pos = source.find('\n');
+
+			for(const std::string& define : *defines)
+				source.insert(pos + 1, "#define " + define + "\n");
+		}
+
+		CompileShader(shaderIDs[i], shaderType[i], source.c_str());
 
 		glAttachShader(m_programID, shaderIDs[i]);
+
+		delete[] shaderSource;
 	}
 
 	// Link the program
@@ -143,6 +154,7 @@ const GLR::InputParameter* GLR::Shader::GetUniform(const std::string& name) cons
 		return &it->second;
 
 	LOG_E("Uniform not found");
+	return nullptr;
 }
 
 const GLR::UniformBlock* GLR::Shader::GetUniformBlock(const std::string& name) const
@@ -152,6 +164,7 @@ const GLR::UniformBlock* GLR::Shader::GetUniformBlock(const std::string& name) c
 		return &it->second;
 
 	LOG_E("Uniform block not found");
+	return nullptr;
 }
 
 GLR::ShaderStorageBlock* GLR::Shader::GetShaderStorageBlock(const std::string& name)
@@ -161,6 +174,27 @@ GLR::ShaderStorageBlock* GLR::Shader::GetShaderStorageBlock(const std::string& n
 		return &it->second;
 
 	LOG_E("Shader storage block not found");
+	return nullptr;
+}
+
+const GLR::UniformBlock* GLR::Shader::GetGlobalUniformBlock(const std::string& name)
+{
+	auto it = m_globalUniformBlocks.find(name);
+	if (it != m_globalUniformBlocks.end())
+		return &it->second;
+
+	LOG_E("Uniform block not found");
+	return nullptr;
+}
+
+GLR::ShaderStorageBlock* GLR::Shader::GetGlobalShaderStorageBlock(const std::string& name)
+{
+	auto it = m_globalShaderStorageBlocks.find(name);
+	if (it != m_globalShaderStorageBlocks.end())
+		return &it->second;
+
+	LOG_E("Shader storage block not found");
+	return nullptr;
 }
 
 void GLR::Shader::CompileShader(GLuint& shaderID, GLenum shaderType, const char* shaderSource)
@@ -271,11 +305,17 @@ void GLR::Shader::LoadUniforms()
 		if(name.find('.') != name.npos)
 			continue;
 
+		if (arraySize > 1)
+			name.erase(name.length() - 3);
+
 		// Create and store the uniforms by name
-		if(type >= GL_SAMPLER_1D && type <= GL_SAMPLER_2D_SHADOW)
-			m_uniforms[name] = InputParameter(name, location, type, samplerCount++);
+		if (type >= GL_SAMPLER_1D && type <= GL_SAMPLER_2D_SHADOW || type >= GL_IMAGE_1D && type <= GL_UNSIGNED_INT_IMAGE_3D)
+		{
+			m_uniforms[name] = InputParameter(name, location, type, arraySize, samplerCount);
+			samplerCount += arraySize;
+		}
 		else
-			m_uniforms[name] = InputParameter(name, location, type);
+			m_uniforms[name] = InputParameter(name, location, type, arraySize);
 	}
 
 	GL_GET_ERROR();
@@ -306,7 +346,7 @@ void GLR::Shader::LoadAttributes()
 		GLint location = glGetAttribLocation(m_programID, name.c_str());
 
 		// Create and store the attribute by name
-		m_attributes[name] = InputParameter(name, location, type);
+		m_attributes[name] = InputParameter(name, location, type, 1);
 	}
 
 	GL_GET_ERROR();

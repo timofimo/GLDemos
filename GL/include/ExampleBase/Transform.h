@@ -1,11 +1,4 @@
 #pragma once
-#pragma warning(push, 0)
-#include <glm/glm.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-#pragma warning(pop)
-#include <vector>
-#include <algorithm>
 
 class Transform
 {
@@ -16,12 +9,12 @@ class Transform
 	};
 
 public:
-	Transform() : m_localPosition(), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF){}
-	Transform(const glm::vec3& position) : m_localPosition(position), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
+	Transform() : m_localPosition(), m_localOrientation(1, 0, 0, 0), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF){}
+	Transform(const glm::vec3& position) : m_localPosition(position), m_localOrientation(1, 0, 0, 0), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
 	Transform(const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
 	Transform(const glm::vec3& position, const glm::quat& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) {}
-	Transform(Transform* parent) : m_localPosition(), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
-	Transform(Transform* parent, const glm::vec3& position) : m_localPosition(position), m_localOrientation(), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
+	Transform(Transform* parent) : m_localPosition(), m_localOrientation(1, 0, 0, 0), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
+	Transform(Transform* parent, const glm::vec3& position) : m_localPosition(position), m_localOrientation(1, 0, 0, 0), m_localScale(1.0f), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
 	Transform(Transform* parent, const glm::vec3& position, const glm::vec3& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
 	Transform(Transform* parent, const glm::vec3& position, const glm::quat& orientation, const glm::vec3& scale) : m_localPosition(position), m_localOrientation(orientation), m_localScale(scale), m_localMatrix(), m_worldMatrix(), m_parent(nullptr), m_children(), m_flags(0xFF) { SetParent(parent); }
 	~Transform()
@@ -108,7 +101,7 @@ public:
 		if(m_flags & CHANGED)
 		{
 			m_flags &= ~CHANGED;
-			m_localMatrix = glm::translate(GetPosition()) * glm::toMat4(GetOrientation()) * glm::scale(GetScale());
+			m_localMatrix = glm::translate(GetPosition()) * glm::mat4_cast(GetOrientation()) * glm::scale(GetScale());
 		}
 		return m_localMatrix;
 	}

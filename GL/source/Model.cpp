@@ -1,4 +1,5 @@
-#include "..\include\Model.h"
+#include <PCH.h>
+#include <Model.h>
 #include "Shader.h"
 
 

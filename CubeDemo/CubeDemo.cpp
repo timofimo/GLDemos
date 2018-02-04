@@ -1,9 +1,11 @@
+#include <PCH.h>
 #include "GLRenderer.h"
 #include "Shader.h"
 #include "Mesh.h"
 #include <ExampleBase/ExampleBase.h>
 #include "ResourceLoader.h"
 #include "ExampleBase/Camera.h"
+#include "Texture.h"
 
 class CubeDemo : public ExampleBase
 {
@@ -62,7 +64,7 @@ private:
 
 int main()
 {
-	CubeDemo CubeDemo(640, 480, "CubeDemo", false);
+	CubeDemo CubeDemo(1280, 720, "CubeDemo", false);
 	CubeDemo.StartGameLoop();
 
 	return 0;

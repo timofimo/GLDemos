@@ -1,4 +1,5 @@
-#include "..\include\BVH.h"
+#include <PCH.h>
+#include <BVH.h>
 
 struct BVHBuildEntry 
 {

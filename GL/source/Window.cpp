@@ -1,7 +1,5 @@
-#include "..\include\Window.h"
-#include <stdexcept>
-#include "Utilities.h"
-#include <glad/glad.h>
+#include <PCH.h>
+#include <Window.h>
 
 void(*GLR::GLFWWindow::m_inputCallback)(int, int) = nullptr;
 
@@ -75,6 +73,11 @@ void GLR::GLFWWindow::GetWindowRes(unsigned& outWidth, unsigned& outHeight)
 	outHeight = m_height;
 }
 
+void GLR::GLFWWindow::Close()
+{
+	glfwSetWindowShouldClose(m_window, 1);
+}
+
 bool GLR::GLFWWindow::ShouldClose()
 {
 	return glfwWindowShouldClose(m_window) > 0;
@@ -84,6 +87,11 @@ void GLR::GLFWWindow::SwapBuffers()
 {
 	glfwSwapBuffers(m_window);
 	glfwPollEvents();
+}
+
+GLFWwindow* GLR::GLFWWindow::GetHandle() const
+{
+	return m_window;
 }
 
 void GLR::GLFWWindow::SetInputCallback(void(* function)(int, int))
