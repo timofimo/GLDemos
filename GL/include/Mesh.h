@@ -3,6 +3,17 @@
 
 namespace GLR
 {
+	struct BoundingBox
+	{
+		glm::vec3 min, max;
+	};
+
+	struct BoundingSphere
+	{
+		glm::vec3 center;
+		float radius;
+	};
+
 	class Mesh : public ManagedItem<Mesh>
 	{
 	public:
@@ -18,11 +29,17 @@ namespace GLR
 		unsigned GetIndexOffset() const;
 		unsigned GetIndexOffsetBytes() const;
 		unsigned GetIndexCount() const;
+		const BoundingBox& GetBoundingBox() const;
+		const BoundingSphere& GetBoundingSphere() const;
+
+		void SetBoundingShapesFromVertexData(const float* vertexData, unsigned vertexDataCount, const std::vector<GLenum>& attributeTypes);
 
 	private:
 		std::shared_ptr<MeshBuffer> m_meshBuffer;
 		unsigned int m_bufferOffset = 0;
 		unsigned int m_bufferSize = 0;
+		BoundingBox m_boundingBox;
+		BoundingSphere m_boundingSphere;
 	};
 
 }

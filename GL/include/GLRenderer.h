@@ -35,6 +35,7 @@ namespace GLR
 
 	void Clear(GLbitfield mask);
 	void DrawIndexed(unsigned count, unsigned offset = 0);
+	void DrawIndexedInstanced(unsigned instances, unsigned count, unsigned offset = 0);
 	void DrawLinesIndexed(unsigned count, unsigned offset = 0);
 	void DrawPointsInstanced(unsigned count, unsigned offset, unsigned instances);
 	void DrawIndexedIndirect(unsigned bufferIndex);

@@ -353,6 +353,15 @@ void GLR::DrawIndexed(unsigned count, unsigned offset)
 	GL_GET_ERROR();
 }
 
+void GLR::DrawIndexedInstanced(unsigned instances, unsigned count, unsigned offset)
+{
+	offset *= sizeof(unsigned);
+	uint64_t tempOffset = offset;
+	glDrawElementsInstanced(GL_TRIANGLES, count, GL_UNSIGNED_INT, reinterpret_cast<void*>(tempOffset), 
+		instances);
+	GL_GET_ERROR();
+}
+
 void GLR::DrawLinesIndexed(unsigned count, unsigned offset)
 {
 	offset *= sizeof(unsigned);

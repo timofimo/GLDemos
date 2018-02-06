@@ -136,6 +136,7 @@ void GLR::ResourceLoader::LoadMeshes(const void* aiscene, std::vector<Mesh>& mes
 				m_currentMeshBuffer->AddVertices(interleavedData.data(), unsigned(interleavedData.size()), indexData.data(), unsigned(indexData.size()), attributeTypes);
 			}
 			meshes.push_back(Mesh(mesh->mName.C_Str(), m_currentMeshBuffer, offset, unsigned(indexData.size())));
+			meshes.back().SetBoundingShapesFromVertexData(interleavedData.data(), unsigned(interleavedData.size()), attributeTypes);
 
 			if (i == scene->mNumMeshes - 1)
 			{
